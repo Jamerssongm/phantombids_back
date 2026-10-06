@@ -4,6 +4,7 @@ import * as houseController from '../controllers/house.controller.js';
 import { autenticar } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import { HOUSE_THEMES } from '../models/HauntHouse.js';
+import { membershipRouter } from './membership.routes.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { mongoIdParam, optionalUrl, paginationQuery, trimmedString } from '../utils/validators.js';
 
@@ -66,3 +67,5 @@ houseRouter.delete(
   validate([mongoIdParam()]),
   asyncHandler(houseController.remove),
 );
+
+houseRouter.use('/:id/members', membershipRouter);

@@ -220,7 +220,16 @@ jerarquía mínima de arriba: solo `head_haunter` administra, los otros tres son
 equivalentes en permisos y se diferencian únicamente en la presentación.
 
 Regla adicional asumida: **una casa no puede quedarse sin `head_haunter`.** No
-se permite expulsar ni degradar al último.
+se permite expulsar ni degradar al último, ni que se retire él mismo (409).
+
+Membresías:
+
+- Quien crea una casa queda como su `head_haunter`.
+- Agregan miembros, cambian roles y expulsan: el `head_haunter` de la casa o un
+  `admin`. Un `head_haunter` puede nombrar a otros `head_haunter`.
+- Cualquier miembro puede salirse solo.
+- Rol por defecto al agregar un miembro: `spirit`.
+- No se puede agregar a un usuario dado de baja (409).
 
 ---
 
