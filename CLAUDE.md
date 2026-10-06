@@ -119,6 +119,35 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
    solo corre validadores de campo). Toda validación entre campos en un update
    va en el service, a mano, o se actualiza con `doc.set(...)` + `doc.save()`.
 
+## Autenticación y autorización
+
+- `POST /api/auth/register`, `POST /api/auth/login` (públicas, con rate limit),
+  `GET|PUT /api/auth/me` (autenticadas).
+- **Contraseñas:** se hashean EXPLÍCITAMENTE en `auth.service` con
+  `utils/password.ts`. **No hay hook `pre('save')` de hashing, a propósito:** el
+  campo se llama `passwordHash` y un hook que recibe texto plano ahí es un
+  riesgo de doble hasheo. El seed hace lo mismo.
+- **JWT** (`utils/jwt.ts`): payload mínimo `{ sub, role }`, HS256 fijo. Nada de
+  email ni datos mutables.
+- **`autenticar`** (`middlewares/auth.ts`) recarga el usuario desde la base en
+  cada request: un cambio de rol o una baja surten efecto en la siguiente
+  petición, sin esperar a que venza el token. En controllers, el usuario se
+  obtiene con `getAuthUser(req)` (estrecha el tipo sin castear).
+- **`autorizar(...roles)`** (`middlewares/autorizar.ts`), nombre literal de la
+  rúbrica. Va SIEMPRE después de `autenticar`:
+  `router.delete('/:id', autenticar, autorizar('admin'), handler)`.
+  401 sin `req.user` (bug de montaje, se loguea), 403 si el rol no está.
+- **El rol nunca se acepta del body.** El registro fuerza `role: 'user'`. Los
+  controllers desestructuran solo los campos permitidos: nunca pasar `req.body`
+  entero a un service.
+- **Login:** mismo mensaje ("Credenciales inválidas", 401) para email
+  inexistente y contraseña incorrecta, y bcrypt contra un hash de relleno para
+  que el tiempo de respuesta tampoco delate qué emails existen.
+- **Rate limit** (`middlewares/rateLimit.ts`): login 10 intentos fallidos y
+  registro 10 por IP cada 15 min, 429 vía errorHandler. Store en memoria (una
+  instancia). `app.set('trust proxy', 1)` es necesario detrás del proxy de
+  Render.
+
 ## Despliegue
 
 Render, servicio web gratuito, configurado en `render.yaml`. Guía completa y
