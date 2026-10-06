@@ -100,8 +100,11 @@ subasta se cancelaría, penalizando a los cuatro.
 | `severe` | 72 horas |
 
   El schema solo exige el rango global de 12 a 72 horas. La escala por severidad
-  es la que usa el catálogo sembrado (`src/utils/seed.ts`), y un `admin` que
-  cree o edite una maldición debería respetarla.
+  la valida `curse.service` al crear o editar una maldición (422 si no la
+  respeta) y es la que usa el catálogo sembrado (`src/utils/seed.ts`).
+- Una maldición del catálogo solo se puede borrar si ningún objeto ni ninguna
+  maldición asignada (`UserCurse`) la referencia (409). Es catálogo, pero la
+  historia de sanciones depende de ella.
 
 - Estados de una maldición asignada (`UserCurse`):
 
@@ -188,6 +191,16 @@ Es el que exige la rúbrica (criterio 5) y el que consume el middleware
 
 **El rol nunca se acepta desde el body del registro.** Se fuerza a `user`.
 
+Reglas de administración de usuarios:
+
+- La baja de un usuario es **lógica** (`isActive: false`), nunca física: pujas,
+  apuestas, membresías y maldiciones lo referencian. Un usuario dado de baja no
+  puede iniciar sesión y su token deja de servir de inmediato.
+- Un `admin` **no puede quitarse su propio rol ni darse de baja a sí mismo**
+  (409): el sistema podría quedar sin administradores, y eso no se puede
+  revertir por API.
+- `reputation` no se edita por API: solo la mueven los eventos de §1.
+
 ### Rol de casa (`HouseMembership.houseRole`)
 
 Aplica solo dentro de una Haunt House concreta. Un usuario puede tener roles
@@ -207,7 +220,32 @@ jerarquía mínima de arriba: solo `head_haunter` administra, los otros tres son
 equivalentes en permisos y se diferencian únicamente en la presentación.
 
 Regla adicional asumida: **una casa no puede quedarse sin `head_haunter`.** No
-se permite expulsar ni degradar al último.
+se permite expulsar ni degradar al último, ni que se retire él mismo (409).
+
+Membresías:
+
+- Quien crea una casa queda como su `head_haunter`.
+- Agregan miembros, cambian roles y expulsan: el `head_haunter` de la casa o un
+  `admin`. Un `head_haunter` puede nombrar a otros `head_haunter`.
+- Cualquier miembro puede salirse solo.
+- Rol por defecto al agregar un miembro: `spirit`.
+- No se puede agregar a un usuario dado de baja (409).
+
+---
+
+## 7b. Borrados y ediciones con historia
+
+Regla general: **lo que tiene historia de subastas no se borra**. Pujas,
+apuestas, maldiciones asignadas y rankings referencian subastas, y las subastas
+referencian objetos; borrar un eslabón deja la historia rota.
+
+| Recurso | Regla |
+|---|---|
+| Objeto — editar | 409 si tiene una subasta `open`: cambiar el rango con pujas en curso corrompe la subasta |
+| Objeto — borrar | 409 si tiene alguna subasta en un estado distinto de `scheduled`. Si solo tiene subastas `scheduled`, se borran con él |
+| Casa — borrar | 409 si tiene subastas `open`. 409 también si alguno de sus objetos tiene subastas `closed` o `cancelled` (se hereda la regla del objeto). Si pasa, se borran en cascada sus subastas `scheduled`, sus objetos y sus membresías |
+| Maldición del catálogo — borrar | 409 si algún objeto o `UserCurse` la referencia |
+| Usuario — borrar | Siempre lógico (`isActive: false`), ver §7 |
 
 ---
 

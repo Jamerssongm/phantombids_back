@@ -85,6 +85,7 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
    `Partial<RawDocType>`. Nada de `Model.create<Algo>(…)`.
 3. **La opción `background` en índices fue eliminada.** No usarla en
    `schema.index()` ni en `index: { background: true }`.
+4. **`FilterQuery` ya no existe: se llama `QueryFilter<T>`.**
 
 ## Modelos (src/models/)
 
@@ -145,8 +146,32 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
   que el tiempo de respuesta tampoco delate qué emails existen.
 - **Rate limit** (`middlewares/rateLimit.ts`): login 10 intentos fallidos y
   registro 10 por IP cada 15 min, 429 vía errorHandler. Store en memoria (una
-  instancia). `app.set('trust proxy', 1)` es necesario detrás del proxy de
-  Render.
+  instancia). `app.set('trust proxy', 1)` SOLO con `NODE_ENV=production`: detrás
+  del proxy de Render es necesario; en local permitiría falsear
+  `X-Forwarded-For` y esquivar el límite.
+
+## Recursos CRUD (convenciones)
+
+- Un archivo por capa y recurso: `routes/x.routes.ts` → `controllers/x.controller.ts`
+  → `services/x.service.ts`. Montaje en `routes/index.ts`. Rutas anidadas con
+  `Router({ mergeParams: true })` (ej. `/houses/:id/members`).
+- **Lista blanca por recurso en dos lugares:** el controller desestructura solo
+  los campos permitidos del body, y el service asigna campo por campo. Nunca
+  `...req.body` ni `Model.create(req.body)`.
+- **Autorización que no es rol global** (dueño, rol de casa) vive en
+  `services/access.service.ts`: `assertOwnerOrAdmin`, `assertHouseAdmin`,
+  `assertHouseMember`. `admin` pasa todos.
+- **Updates:** carga + mutación + `save()`, para que `pre('validate')` evalúe
+  el estado final. Si alguna vez se usa `findOneAndUpdate`, la validación entre
+  campos va a mano en el service.
+- Una referencia del body que no existe (`curse`, `house`, `userId`) da **422**
+  con detalle del campo. Un id de la URL que no existe da **404**.
+- Creación: `created(res, doc, location)` con `location = req.baseUrl + '/' + doc.id`
+  → 201 + header `Location`.
+  Borrado: `noContent(res)` → 204.
+- Datos de usuario poblados dentro de otro recurso: `PUBLIC_USER_FIELDS`
+  (nunca email). Perfil propio o visto por admin: `serializeUser(user, viewer)`.
+- Reglas de borrado con historia: `docs/REGLAS.md` §7b.
 
 ## Despliegue
 

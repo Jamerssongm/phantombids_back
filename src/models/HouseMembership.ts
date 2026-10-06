@@ -1,4 +1,4 @@
-import { Schema, model, type Types } from 'mongoose';
+import { Schema, model, type HydratedDocument, type Types } from 'mongoose';
 import { baseSchemaOptions } from '../utils/schemaOptions.js';
 
 /**
@@ -52,3 +52,5 @@ houseMembershipSchema.index({ user: 1, house: 1 }, { unique: true });
 houseMembershipSchema.index({ house: 1, houseRole: 1 });
 
 export const HouseMembership = model<IHouseMembership>('HouseMembership', houseMembershipSchema);
+
+export type HouseMembershipDocument = HydratedDocument<IHouseMembership>;

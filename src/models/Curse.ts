@@ -1,4 +1,4 @@
-import { Schema, model, type Types } from 'mongoose';
+import { Schema, model, type HydratedDocument, type Types } from 'mongoose';
 import { baseSchemaOptions, integerValidator } from '../utils/schemaOptions.js';
 
 /**
@@ -62,3 +62,5 @@ const curseSchema = new Schema<ICurse>(
 );
 
 export const Curse = model<ICurse>('Curse', curseSchema);
+
+export type CurseDocument = HydratedDocument<ICurse>;

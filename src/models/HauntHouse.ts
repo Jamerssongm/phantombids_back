@@ -1,4 +1,4 @@
-import { Schema, model, type Types } from 'mongoose';
+import { Schema, model, type HydratedDocument, type Types } from 'mongoose';
 import { URL_PATTERN, baseSchemaOptions } from '../utils/schemaOptions.js';
 
 export const HOUSE_THEMES = ['darkness', 'comedy', 'terror', 'corporate'] as const;
@@ -64,3 +64,5 @@ const hauntHouseSchema = new Schema<IHauntHouse>(
 );
 
 export const HauntHouse = model<IHauntHouse>('HauntHouse', hauntHouseSchema);
+
+export type HauntHouseDocument = HydratedDocument<IHauntHouse>;

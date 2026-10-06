@@ -1,4 +1,4 @@
-import { Schema, model, type Types } from 'mongoose';
+import { Schema, model, type HydratedDocument, type Types } from 'mongoose';
 import { baseSchemaOptions } from '../utils/schemaOptions.js';
 
 /** Estados de una maldición asignada (docs/REGLAS.md §4). */
@@ -69,3 +69,5 @@ userCurseSchema.index({ user: 1, status: 1 });
 userCurseSchema.index({ status: 1, expiresAt: 1 });
 
 export const UserCurse = model<IUserCurse>('UserCurse', userCurseSchema);
+
+export type UserCurseDocument = HydratedDocument<IUserCurse>;
