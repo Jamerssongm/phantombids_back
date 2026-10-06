@@ -65,6 +65,13 @@ userCurseSchema.pre('validate', async function () {
 });
 
 // Curse Log de un usuario y vencimiento de maldiciones activas.
+// Una maldición por usuario y por subasta de origen: un usuario tiene una sola
+// puja por subasta, así que recibe como máximo una penalización por ella. Además
+// es la clave que hace idempotente la penalización al cerrar (auction.service).
+userCurseSchema.index(
+  { user: 1, sourceAuction: 1 },
+  { unique: true, partialFilterExpression: { sourceAuction: { $exists: true } } },
+);
 userCurseSchema.index({ user: 1, status: 1 });
 userCurseSchema.index({ status: 1, expiresAt: 1 });
 

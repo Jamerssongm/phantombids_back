@@ -55,3 +55,11 @@ export async function remove(req: Request<IdParams>, res: Response) {
   await auctionService.deleteAuction(req.params.id, getAuthUser(req));
   noContent(res);
 }
+
+export async function close(req: Request<IdParams>, res: Response) {
+  ok(res, await auctionService.closeAuction(req.params.id, getAuthUser(req)));
+}
+
+export async function result(req: Request<IdParams>, res: Response) {
+  ok(res, await auctionService.getAuctionResult(req.params.id));
+}

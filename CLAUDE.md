@@ -175,6 +175,22 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
   (nunca email). Perfil propio o visto por admin: `serializeUser(user, viewer)`.
 - Reglas de borrado con historia: `docs/REGLAS.md` §7b.
 
+## Subastas: cierre y consistencia
+
+- `services/auctionResolver.ts` es una **función pura** (sin Mongoose): toda
+  regla de resolución nueva va ahí y en `tests/auctionResolver.test.ts`.
+- **Sin transacciones** (Mongo standalone en dev). El cierre es claim
+  condicional (`findOneAndUpdate` con `status: 'open'`) + efectos idempotentes +
+  `settledAt`. Explicado en la cabecera de `auction.service.ts` y en el README.
+  Toda escritura nueva en el cierre tiene que ser idempotente.
+- **Reputación:** solo con `applyReputationEvent(userId, key, delta)`
+  (`reputation.service.ts`), nunca con `$inc` directo. La clave única hace
+  idempotente el movimiento; `reputationEvents` es interno (select: false).
+- `syncLifecycle(auction)` antes de cualquier decisión que dependa del estado de
+  una subasta: aplica aperturas y cierres vencidos de forma perezosa.
+- El scheduler (`scheduler.service.ts`) arranca en `index.ts` si
+  `AUTO_CLOSE_ENABLED` y se detiene en el shutdown antes de cerrar la base.
+
 ## Despliegue
 
 Render, servicio web gratuito, configurado en `render.yaml`. Guía completa y

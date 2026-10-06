@@ -2,13 +2,15 @@ import type { SchemaOptions } from 'mongoose';
 
 /**
  * Forma pública de cualquier documento: `_id` pasa a `id` (string, como espera el
- * frontend), y se eliminan `__v` y `passwordHash`. Se aplica también a los
- * documentos populados, porque cada uno usa el toJSON de su propio schema.
+ * frontend), y se eliminan los campos internos `__v`, `passwordHash` y
+ * `reputationEvents`. Se aplica también a los documentos populados, porque cada
+ * uno usa el toJSON de su propio schema.
  */
 function toPublicJSON(_doc: unknown, ret: Record<string, unknown>): Record<string, unknown> {
-  const { _id, __v, passwordHash, ...rest } = ret;
+  const { _id, __v, passwordHash, reputationEvents, ...rest } = ret;
   void __v;
   void passwordHash;
+  void reputationEvents;
   return { id: String(_id), ...rest };
 }
 

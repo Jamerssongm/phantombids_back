@@ -18,6 +18,7 @@ export interface IUser {
   reputation: number;
   avatarUrl?: string;
   isActive: boolean;
+  reputationEvents: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,6 +72,10 @@ const userSchema = new Schema<IUser>(
       match: [URL_PATTERN, 'El avatar debe ser una URL http(s) válida'],
     },
     isActive: { type: Boolean, default: true },
+    // Claves de los movimientos de reputación ya aplicados (ej. "penalty:<subasta>").
+    // Hacen idempotente cada movimiento: ver services/reputation.service.ts.
+    // Interno: select: false y toJSON lo quita.
+    reputationEvents: { type: [String], default: [], select: false },
   },
   baseSchemaOptions,
 );

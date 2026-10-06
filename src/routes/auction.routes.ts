@@ -58,4 +58,17 @@ auctionRouter.delete(
   asyncHandler(auctionController.remove),
 );
 
+// head_haunter de la casa o admin (lo verifica el service: es rol de casa).
+auctionRouter.post(
+  '/:id/close',
+  autenticar,
+  validate([mongoIdParam()]),
+  asyncHandler(auctionController.close),
+);
+auctionRouter.get(
+  '/:id/result',
+  validate([mongoIdParam()]),
+  asyncHandler(auctionController.result),
+);
+
 auctionRouter.use('/:id/bids', bidRouter);

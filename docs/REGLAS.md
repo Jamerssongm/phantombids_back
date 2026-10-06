@@ -10,7 +10,7 @@
 > frontend maquetado, no puede dejar esas decisiones sin tomar.
 >
 > **Toda la lógica derivada de este documento vive aislada en módulos propios**
-> (`services/auctionResolver.service.ts`, `services/reputation.service.ts`,
+> (`services/auctionResolver.ts`, `services/reputation.service.ts`,
 > `services/ranking.service.ts`) para poder reemplazarla cuando la docente
 > entregue las reglas definitivas, sin tocar el resto del sistema.
 >
