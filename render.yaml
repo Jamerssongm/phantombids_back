@@ -1,0 +1,37 @@
+# Blueprint de Render para la API de PhantomBids.
+# Guía paso a paso y troubleshooting: docs/DESPLIEGUE.md
+services:
+  - type: web
+    name: phantombids-api
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    # IMPORTANTE: --include=dev es obligatorio.
+    # Con NODE_ENV=production, `npm ci` omite las devDependencies: typescript (tsc)
+    # no se instala, `npm run build` falla con "tsc: not found" y el deploy no sale.
+    # Las devDependencies solo se usan para compilar; en runtime corre dist/ con node.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    # /health devuelve 503 si MongoDB está desconectado: Render no enruta tráfico
+    # a una instancia que no puede atender peticiones.
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # No es secreto: se fija acá para que nunca quede en "development" por olvido.
+      - key: NODE_ENV
+        value: production
+      # PORT no se declara: Render lo inyecta (10000) y env.ts lo lee.
+      # El resto se carga a mano en el dashboard (sync: false = no se versiona el valor).
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        sync: false
+      - key: BCRYPT_ROUNDS
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: AUTO_CLOSE_ENABLED
+        sync: false

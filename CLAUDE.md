@@ -54,12 +54,49 @@ src/
   controllers/   handlers HTTP delgados: leen req, llaman al service, responden
   routes/        definición y montaje de rutas + validadores + docs Swagger
   middlewares/   auth (JWT), autorizar (roles), validación, manejo global de errores
-  utils/         helpers, AppError, logger
+  utils/         helpers, AppError, logger, seed.ts (npm run seed)
   types/         tipos compartidos
   app.ts         construcción de la app Express (sin listen)
-  index.ts       arranque: conecta a la DB y hace listen
-  seed.ts        datos de prueba (npm run seed)
+  index.ts       arranque: conecta a la DB, hace listen, cierre ordenado
 ```
+
+En la raíz de `src/` solo van `app.ts` e `index.ts`: el criterio 1 penaliza
+archivos sueltos.
+
+`src/config/env.ts` valida todas las variables al arrancar y exporta `env`,
+tipado e inmutable. **Nunca leer `process.env` fuera de ese archivo.** Para
+agregar una variable: validarla en `env.ts`, sumarla a `.env.example`,
+`render.yaml` y `docs/DESPLIEGUE.md`.
+
+## Mongoose 9 (no 8)
+
+Diferencias que rompen ejemplos y código copiados de versiones anteriores:
+
+1. **Los hooks `pre()` ya NO reciben `next()`.** Se escriben como funciones
+   `async` sin parámetro y se lanza un error para abortar:
+   ```ts
+   schema.pre('save', async function () {
+     if (!this.isModified('password')) return;
+     this.password = await bcrypt.hash(this.password, env.BCRYPT_ROUNDS);
+   });
+   ```
+   El patrón `pre('save', function (next) { …; next(); })` está roto.
+2. **`create()` e `insertOne()` ya no aceptan parámetros genéricos**: esperan
+   `Partial<RawDocType>`. Nada de `Model.create<Algo>(…)`.
+3. **La opción `background` en índices fue eliminada.** No usarla en
+   `schema.index()` ni en `index: { background: true }`.
+
+## Despliegue
+
+Render, servicio web gratuito, configurado en `render.yaml`. Guía completa y
+troubleshooting en `docs/DESPLIEGUE.md`.
+
+- Build: `npm ci --include=dev && npm run build`. El `--include=dev` es
+  obligatorio: con `NODE_ENV=production` npm omite las devDependencies y `tsc`
+  no existe.
+- `GET /health` devuelve 503 si MongoDB está desconectado. Render lo usa como
+  health check: no cambiarlo a 200 incondicional.
+- `engines.node` es `>=20.19.0` (mínimo de Mongoose 9).
 
 ## Regla de capas
 
