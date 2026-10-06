@@ -86,6 +86,31 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
 3. **La opción `background` en índices fue eliminada.** No usarla en
    `schema.index()` ni en `index: { background: true }`.
 
+## Modelos (src/models/)
+
+- Uno por archivo; cada uno exporta la interfaz `IXxx`, las constantes de enum y
+  el modelo. `models/index.ts` reexporta todo.
+- Todos usan `baseSchemaOptions` (`utils/schemaOptions.ts`): `timestamps` y
+  `toJSON` que convierte `_id` en `id` string y quita `__v` y `passwordHash`.
+  Responder siempre con el documento (o `doc.toJSON()`), **nunca con `.lean()`**,
+  que se saltea el transform y filtra `_id`/`__v`.
+- `User.passwordHash` es `select: false`. Para el login:
+  `.select('+passwordHash')`.
+- **Validadores entre campos** (`maxBid > minBid`, `closesAt > opensAt`,
+  `bettor ≠ targetUser`, `expiresAt > imposedAt`) viven en `pre('validate')`:
+  corren en `save()`/`create()`/`validate()`, **no en `findOneAndUpdate`**.
+  Los services actualizan con `doc.set(...)` + `doc.save()`.
+- `unique` no es un validador: un duplicado llega como error del driver
+  `E11000` (en inglés). El middleware global de errores lo traduce a 409 con
+  mensaje en español.
+- Forma en el schema, negocio en `services/`: que la puja caiga en
+  `[minBid, maxBid]`, que la subasta esté abierta o que haya saldo NO se valida
+  en los modelos.
+- Los nombres de campo del backend difieren de los del mock del frontend en
+  varios modelos (`opensAt`/`closesAt` vs `startsAt`/`endsAt`, refs `house`,
+  `curse`, `user` vs `houseId`, `curseId`, `userId`, etc.). El frontend se
+  adapta al backend al reemplazar los mocks.
+
 ## Despliegue
 
 Render, servicio web gratuito, configurado en `render.yaml`. Guía completa y
