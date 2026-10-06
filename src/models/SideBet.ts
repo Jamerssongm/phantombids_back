@@ -5,7 +5,11 @@ import { baseSchemaOptions } from '../utils/schemaOptions.js';
 export const SIDE_BET_CHIPS = [5, 10, 25, 50] as const;
 export type SideBetChips = (typeof SIDE_BET_CHIPS)[number];
 
-export const SIDE_BET_RESULTS = ['pending', 'won', 'lost'] as const;
+/**
+ * 'cancelled' es transitorio: marca una apuesta que se está cancelando para que un
+ * cierre concurrente no la resuelva; después se devuelven las fichas y se borra.
+ */
+export const SIDE_BET_RESULTS = ['pending', 'won', 'lost', 'cancelled'] as const;
 export type SideBetResult = (typeof SIDE_BET_RESULTS)[number];
 
 /**
@@ -48,7 +52,10 @@ const sideBetSchema = new Schema<ISideBet>(
     },
     result: {
       type: String,
-      enum: { values: SIDE_BET_RESULTS, message: 'El resultado debe ser pending, won o lost' },
+      enum: {
+        values: SIDE_BET_RESULTS,
+        message: 'El resultado debe ser pending, won, lost o cancelled',
+      },
       default: 'pending',
     },
     payout: {
@@ -69,6 +76,8 @@ sideBetSchema.pre('validate', async function () {
 
 // Una sola apuesta por usuario y por subasta (docs/REGLAS.md §5).
 sideBetSchema.index({ auction: 1, bettor: 1 }, { unique: true });
+// Historial de apuestas de un usuario y ranking Betting Prophet.
+sideBetSchema.index({ bettor: 1, result: 1 });
 
 export const SideBet = model<ISideBet>('SideBet', sideBetSchema);
 

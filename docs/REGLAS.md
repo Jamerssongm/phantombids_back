@@ -177,6 +177,30 @@ definir algo distinto. El modelo de datos ya guarda todo lo necesario
 - **No se puede apostar por uno mismo.**
 - El alias objetivo debe ser un participante real de esa subasta.
 
+### Mecánica de la API
+
+- Se apuesta indicando el **alias** del usuario objetivo (`targetAlias`).
+- **Cancelación:** la apuesta pasa a `cancelled`, se devuelven las fichas y se
+  borra. El estado intermedio `cancelled` existe para que un cierre concurrente
+  de la subasta no la resuelva mientras se devuelve. Al borrarse, el usuario
+  puede volver a apostar en esa subasta mientras siga abierta.
+- Si la subasta se cierra mientras se registra una apuesta, la apuesta se
+  cancela y se devuelven las fichas.
+
+### Conflicto abierto: participación vs secreto
+
+La regla "el alias objetivo debe ser un participante real" choca con el secreto
+de las pujas (§2b). Para validarla, la API tiene que responder distinto según el
+alias haya pujado o no, y eso permite **sondear quién participa** probando
+aliases (nunca cuánto pujó). El frontend mock directamente lista los
+participantes de una subasta abierta.
+
+Mitigación actual: el mismo mensaje ("el alias indicado no participa en esta
+subasta") para un alias inexistente y para uno que no pujó, y **no** existe un
+endpoint que liste participantes. **Pendiente de decisión:** o se acepta que la
+participación (no el monto) es pública, o se elimina la validación de
+participación.
+
 ### Resolución
 
 | Desenlace | Resultado de la apuesta |

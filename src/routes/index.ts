@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { auctionRouter } from './auction.routes.js';
 import { authRouter } from './auth.routes.js';
+import { betRouter } from './bet.routes.js';
 import { curseRouter } from './curse.routes.js';
 import { houseRouter } from './house.routes.js';
 import { objectRouter } from './object.routes.js';
@@ -15,3 +16,4 @@ apiRouter.use('/users', userRouter);
 apiRouter.use('/houses', houseRouter);
 apiRouter.use('/objects', objectRouter);
 apiRouter.use('/auctions', auctionRouter);
+apiRouter.use('/bets', betRouter);
