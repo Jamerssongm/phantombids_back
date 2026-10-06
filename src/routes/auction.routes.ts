@@ -4,6 +4,7 @@ import * as auctionController from '../controllers/auction.controller.js';
 import { autenticar, autenticarOpcional } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import { AUCTION_STATUSES } from '../models/Auction.js';
+import { bidRouter } from './bid.routes.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { mongoIdBody, mongoIdParam, paginationQuery } from '../utils/validators.js';
 
@@ -56,3 +57,5 @@ auctionRouter.delete(
   validate([mongoIdParam()]),
   asyncHandler(auctionController.remove),
 );
+
+auctionRouter.use('/:id/bids', bidRouter);
