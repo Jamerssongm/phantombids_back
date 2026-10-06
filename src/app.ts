@@ -20,8 +20,10 @@ const { version: API_VERSION } = createRequire(import.meta.url)('../package.json
 export const app = express();
 
 // Render pone un proxy delante: sin esto, req.ip sería la IP del proxy y el rate
-// limit contaría a todos los clientes como uno solo.
-app.set('trust proxy', 1);
+// limit contaría a todos los clientes como uno solo. SOLO en producción: en local
+// no hay proxy, y confiar en X-Forwarded-For permitiría falsear la IP y esquivar
+// el rate limit mandando un header distinto en cada intento.
+if (env.isProduction) app.set('trust proxy', 1);
 
 // morgan va primero: si va después de express.json(), las peticiones con JSON mal
 // formado fallan antes de llegar a él y nunca quedan registradas.

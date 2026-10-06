@@ -145,8 +145,9 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
   que el tiempo de respuesta tampoco delate qué emails existen.
 - **Rate limit** (`middlewares/rateLimit.ts`): login 10 intentos fallidos y
   registro 10 por IP cada 15 min, 429 vía errorHandler. Store en memoria (una
-  instancia). `app.set('trust proxy', 1)` es necesario detrás del proxy de
-  Render.
+  instancia). `app.set('trust proxy', 1)` SOLO con `NODE_ENV=production`: detrás
+  del proxy de Render es necesario; en local permitiría falsear
+  `X-Forwarded-For` y esquivar el límite.
 
 ## Despliegue
 
