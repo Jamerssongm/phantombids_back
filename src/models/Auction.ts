@@ -1,4 +1,4 @@
-import { Schema, model, type Types } from 'mongoose';
+import { Schema, model, type HydratedDocument, type Types } from 'mongoose';
 import { baseSchemaOptions, integerValidator } from '../utils/schemaOptions.js';
 
 export const AUCTION_STATUSES = ['scheduled', 'open', 'closed', 'cancelled'] as const;
@@ -73,3 +73,5 @@ auctionSchema.index({ status: 1, closesAt: 1 });
 auctionSchema.index({ object: 1 });
 
 export const Auction = model<IAuction>('Auction', auctionSchema);
+
+export type AuctionDocument = HydratedDocument<IAuction>;

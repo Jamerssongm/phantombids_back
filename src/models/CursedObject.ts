@@ -1,4 +1,4 @@
-import { Schema, model, type Types } from 'mongoose';
+import { Schema, model, type HydratedDocument, type Types } from 'mongoose';
 import { URL_PATTERN, baseSchemaOptions, integerValidator } from '../utils/schemaOptions.js';
 
 export interface ICursedObject {
@@ -74,3 +74,5 @@ cursedObjectSchema.pre('validate', async function () {
 cursedObjectSchema.index({ house: 1 });
 
 export const CursedObject = model<ICursedObject>('CursedObject', cursedObjectSchema);
+
+export type CursedObjectDocument = HydratedDocument<ICursedObject>;

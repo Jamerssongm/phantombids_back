@@ -1,4 +1,4 @@
-import { Schema, model, type Types } from 'mongoose';
+import { Schema, model, type HydratedDocument, type Types } from 'mongoose';
 import { baseSchemaOptions } from '../utils/schemaOptions.js';
 
 /** Fichas permitidas (docs/ESPEC.md y docs/REGLAS.md §5). */
@@ -71,3 +71,5 @@ sideBetSchema.pre('validate', async function () {
 sideBetSchema.index({ auction: 1, bettor: 1 }, { unique: true });
 
 export const SideBet = model<ISideBet>('SideBet', sideBetSchema);
+
+export type SideBetDocument = HydratedDocument<ISideBet>;

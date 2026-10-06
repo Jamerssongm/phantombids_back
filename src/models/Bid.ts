@@ -1,4 +1,4 @@
-import { Schema, model, type Types } from 'mongoose';
+import { Schema, model, type HydratedDocument, type Types } from 'mongoose';
 import { baseSchemaOptions, integerValidator } from '../utils/schemaOptions.js';
 
 /**
@@ -47,3 +47,5 @@ bidSchema.index({ auction: 1, user: 1 }, { unique: true });
 bidSchema.index({ auction: 1, amount: 1 });
 
 export const Bid = model<IBid>('Bid', bidSchema);
+
+export type BidDocument = HydratedDocument<IBid>;

@@ -100,8 +100,11 @@ subasta se cancelaría, penalizando a los cuatro.
 | `severe` | 72 horas |
 
   El schema solo exige el rango global de 12 a 72 horas. La escala por severidad
-  es la que usa el catálogo sembrado (`src/utils/seed.ts`), y un `admin` que
-  cree o edite una maldición debería respetarla.
+  la valida `curse.service` al crear o editar una maldición (422 si no la
+  respeta) y es la que usa el catálogo sembrado (`src/utils/seed.ts`).
+- Una maldición del catálogo solo se puede borrar si ningún objeto ni ninguna
+  maldición asignada (`UserCurse`) la referencia (409). Es catálogo, pero la
+  historia de sanciones depende de ella.
 
 - Estados de una maldición asignada (`UserCurse`):
 
