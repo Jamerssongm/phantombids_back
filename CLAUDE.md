@@ -85,6 +85,7 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
    `Partial<RawDocType>`. Nada de `Model.create<Algo>(…)`.
 3. **La opción `background` en índices fue eliminada.** No usarla en
    `schema.index()` ni en `index: { background: true }`.
+4. **`FilterQuery` ya no existe: se llama `QueryFilter<T>`.**
 
 ## Modelos (src/models/)
 

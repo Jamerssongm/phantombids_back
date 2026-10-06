@@ -191,6 +191,16 @@ Es el que exige la rúbrica (criterio 5) y el que consume el middleware
 
 **El rol nunca se acepta desde el body del registro.** Se fuerza a `user`.
 
+Reglas de administración de usuarios:
+
+- La baja de un usuario es **lógica** (`isActive: false`), nunca física: pujas,
+  apuestas, membresías y maldiciones lo referencian. Un usuario dado de baja no
+  puede iniciar sesión y su token deja de servir de inmediato.
+- Un `admin` **no puede quitarse su propio rol ni darse de baja a sí mismo**
+  (409): el sistema podría quedar sin administradores, y eso no se puede
+  revertir por API.
+- `reputation` no se edita por API: solo la mueven los eventos de §1.
+
 ### Rol de casa (`HouseMembership.houseRole`)
 
 Aplica solo dentro de una Haunt House concreta. Un usuario puede tener roles
