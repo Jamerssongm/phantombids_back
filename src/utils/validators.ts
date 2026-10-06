@@ -65,3 +65,11 @@ export function trimmedString(
   }
   return escape ? chain.escape() : chain;
 }
+
+/** URL http(s) opcional del body; null significa "borrar el valor". */
+export function optionalUrl(field: string): ValidationChain {
+  return body(field)
+    .optional({ values: 'null' })
+    .isURL({ protocols: ['http', 'https'], require_protocol: true })
+    .withMessage(`"${field}" debe ser una URL http(s) válida`);
+}

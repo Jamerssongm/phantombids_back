@@ -224,6 +224,22 @@ se permite expulsar ni degradar al último.
 
 ---
 
+## 7b. Borrados y ediciones con historia
+
+Regla general: **lo que tiene historia de subastas no se borra**. Pujas,
+apuestas, maldiciones asignadas y rankings referencian subastas, y las subastas
+referencian objetos; borrar un eslabón deja la historia rota.
+
+| Recurso | Regla |
+|---|---|
+| Objeto — editar | 409 si tiene una subasta `open`: cambiar el rango con pujas en curso corrompe la subasta |
+| Objeto — borrar | 409 si tiene alguna subasta en un estado distinto de `scheduled`. Si solo tiene subastas `scheduled`, se borran con él |
+| Casa — borrar | 409 si tiene subastas `open`. 409 también si alguno de sus objetos tiene subastas `closed` o `cancelled` (se hereda la regla del objeto). Si pasa, se borran en cascada sus subastas `scheduled`, sus objetos y sus membresías |
+| Maldición del catálogo — borrar | 409 si algún objeto o `UserCurse` la referencia |
+| Usuario — borrar | Siempre lógico (`isActive: false`), ver §7 |
+
+---
+
 ## 8. Resumen de vacíos pendientes de la docente
 
 Lista para trasladar al README y usar como respaldo en la sustentación.
