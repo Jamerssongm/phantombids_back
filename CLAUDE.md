@@ -150,6 +150,29 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
   del proxy de Render es necesario; en local permitiría falsear
   `X-Forwarded-For` y esquivar el límite.
 
+## Recursos CRUD (convenciones)
+
+- Un archivo por capa y recurso: `routes/x.routes.ts` → `controllers/x.controller.ts`
+  → `services/x.service.ts`. Montaje en `routes/index.ts`. Rutas anidadas con
+  `Router({ mergeParams: true })` (ej. `/houses/:id/members`).
+- **Lista blanca por recurso en dos lugares:** el controller desestructura solo
+  los campos permitidos del body, y el service asigna campo por campo. Nunca
+  `...req.body` ni `Model.create(req.body)`.
+- **Autorización que no es rol global** (dueño, rol de casa) vive en
+  `services/access.service.ts`: `assertOwnerOrAdmin`, `assertHouseAdmin`,
+  `assertHouseMember`. `admin` pasa todos.
+- **Updates:** carga + mutación + `save()`, para que `pre('validate')` evalúe
+  el estado final. Si alguna vez se usa `findOneAndUpdate`, la validación entre
+  campos va a mano en el service.
+- Una referencia del body que no existe (`curse`, `house`, `userId`) da **422**
+  con detalle del campo. Un id de la URL que no existe da **404**.
+- Creación: `created(res, doc, location)` con `location = req.baseUrl + '/' + doc.id`
+  → 201 + header `Location`.
+  Borrado: `noContent(res)` → 204.
+- Datos de usuario poblados dentro de otro recurso: `PUBLIC_USER_FIELDS`
+  (nunca email). Perfil propio o visto por admin: `serializeUser(user, viewer)`.
+- Reglas de borrado con historia: `docs/REGLAS.md` §7b.
+
 ## Despliegue
 
 Render, servicio web gratuito, configurado en `render.yaml`. Guía completa y
