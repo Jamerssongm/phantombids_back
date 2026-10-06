@@ -1,0 +1,7 @@
+node_modules
+dist
+coverage
+package-lock.json
+# Prosa: Prettier corrompía estos archivos en el repo del frontend
+CLAUDE.md
+docs/
