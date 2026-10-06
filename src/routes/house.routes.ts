@@ -39,6 +39,41 @@ function houseBody(optional: boolean) {
   ];
 }
 
+/**
+ * @openapi
+ * /api/houses:
+ *   get:
+ *     tags:
+ *     - Houses
+ *     summary: Listar casas
+ *     parameters:
+ *     - $ref: '#/components/parameters/Page'
+ *     - $ref: '#/components/parameters/Limit'
+ *     - name: theme
+ *       in: query
+ *       schema:
+ *         type: string
+ *         enum:
+ *         - darkness
+ *         - comedy
+ *         - terror
+ *         - corporate
+ *     - name: name
+ *       in: query
+ *       schema:
+ *         type: string
+ *       description: Contiene
+ *     - name: code
+ *       in: query
+ *       schema:
+ *         type: string
+ *       description: Contiene
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/HauntHousePage'
+ *       422:
+ *         $ref: '#/components/responses/ValidationError'
+ */
 houseRouter.get(
   '/',
   validate([
@@ -49,18 +84,122 @@ houseRouter.get(
   ]),
   asyncHandler(houseController.list),
 );
+/**
+ * @openapi
+ * /api/houses/{id}:
+ *   get:
+ *     tags:
+ *     - Houses
+ *     summary: Detalle de una casa con miembros y objetos
+ *     parameters:
+ *     - $ref: '#/components/parameters/Id'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/HouseDetailOk'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
 houseRouter.get('/:id', validate([mongoIdParam()]), asyncHandler(houseController.getById));
 
 // Cualquier usuario autenticado puede crear una casa; queda como head_haunter.
+/**
+ * @openapi
+ * /api/houses:
+ *   post:
+ *     tags:
+ *     - Houses
+ *     summary: Crear una casa
+ *     description: Cualquier usuario autenticado. Quien la crea queda como su **head_haunter**.
+ *     security:
+ *     - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/HouseInput'
+ *     responses:
+ *       201:
+ *         $ref: '#/components/responses/HauntHouseCreated'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       409:
+ *         $ref: '#/components/responses/Conflict'
+ *       422:
+ *         $ref: '#/components/responses/ValidationError'
+ */
 houseRouter.post('/', autenticar, validate(houseBody(false)), asyncHandler(houseController.create));
 
 // head_haunter de la casa o admin: lo verifica el service (rol de casa, no global).
+/**
+ * @openapi
+ * /api/houses/{id}:
+ *   put:
+ *     tags:
+ *     - Houses
+ *     summary: Editar una casa
+ *     description: head_haunter de la casa o admin.
+ *     security:
+ *     - bearerAuth: []
+ *     parameters:
+ *     - $ref: '#/components/parameters/Id'
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/HouseInput'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/HauntHouseOk'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       409:
+ *         $ref: '#/components/responses/Conflict'
+ *       422:
+ *         $ref: '#/components/responses/ValidationError'
+ */
 houseRouter.put(
   '/:id',
   autenticar,
   validate([mongoIdParam(), ...houseBody(true)]),
   asyncHandler(houseController.update),
 );
+/**
+ * @openapi
+ * /api/houses/{id}:
+ *   delete:
+ *     tags:
+ *     - Houses
+ *     summary: Borrar una casa
+ *     description: head_haunter de la casa o admin. 409 si tiene subastas abiertas o con historia (REGLAS.md
+ *       §7b).
+ *     security:
+ *     - bearerAuth: []
+ *     parameters:
+ *     - $ref: '#/components/parameters/Id'
+ *     responses:
+ *       204:
+ *         $ref: '#/components/responses/NoContent'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       403:
+ *         $ref: '#/components/responses/Forbidden'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       409:
+ *         $ref: '#/components/responses/Conflict'
+ */
 houseRouter.delete(
   '/:id',
   autenticar,
