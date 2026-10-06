@@ -19,7 +19,7 @@ const BEARER = /^Bearer\s+(\S+)$/i;
  * 401 si: falta el header, no es Bearer, la firma es inválida o el token expiró
  * (esos dos los traduce el errorHandler), el usuario ya no existe o está inactivo.
  */
-export const autenticar = asyncHandler(async (req, _res, next) => {
+async function authenticate(req: Request): Promise<void> {
   const header = req.headers.authorization;
   if (!header) {
     throw AppError.unauthorized('Falta el token de autenticación', 'MISSING_TOKEN');
@@ -43,6 +43,21 @@ export const autenticar = asyncHandler(async (req, _res, next) => {
   }
 
   req.user = user;
+}
+
+export const autenticar = asyncHandler(async (req, _res, next) => {
+  await authenticate(req);
+  next();
+});
+
+/**
+ * Para rutas públicas que muestran algo extra al usuario logueado (ej. su propia
+ * puja en GET /auctions/:id). Sin header sigue como anónimo; con un header
+ * presente pero inválido responde 401, igual que `autenticar`: un token roto no
+ * se degrada en silencio a "anónimo".
+ */
+export const autenticarOpcional = asyncHandler(async (req, _res, next) => {
+  if (req.headers.authorization) await authenticate(req);
   next();
 });
 

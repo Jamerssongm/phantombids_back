@@ -18,6 +18,8 @@ export interface IAuction {
   winningBid?: number;
   cancellationReason?: CancellationReason;
   resolvedAt?: Date;
+  settledAt?: Date;
+  createdBy: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,7 +54,17 @@ const auctionSchema = new Schema<IAuction>(
         message: 'El motivo de cancelación debe ser no_unique_bids o no_bids',
       },
     },
+    // Momento en que se tomó el cierre (corte de pujas: solo cuentan las creadas antes).
     resolvedAt: { type: Date },
+    // Momento en que se terminaron de aplicar TODOS los efectos del cierre
+    // (duplicados, penalizaciones, apuestas). Sin settledAt, el cierre está a
+    // mitad y cualquier ejecución posterior lo completa (ver auction.service.ts).
+    settledAt: { type: Date },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'La subasta debe tener un creador'],
+    },
   },
   baseSchemaOptions,
 );
@@ -70,7 +82,9 @@ auctionSchema.pre('validate', async function () {
 
 // Listados por estado y búsqueda de subastas vencidas para el cierre automático.
 auctionSchema.index({ status: 1, closesAt: 1 });
-auctionSchema.index({ object: 1 });
+auctionSchema.index({ object: 1, status: 1 });
+// Cierres a medio aplicar que hay que completar.
+auctionSchema.index({ status: 1, settledAt: 1 });
 
 export const Auction = model<IAuction>('Auction', auctionSchema);
 

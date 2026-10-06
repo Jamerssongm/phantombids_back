@@ -5,6 +5,7 @@ import { autenticar } from '../middlewares/auth.js';
 import { autorizar } from '../middlewares/autorizar.js';
 import { validate } from '../middlewares/validate.js';
 import { USER_ROLES } from '../models/User.js';
+import { USER_CURSE_STATUSES } from '../models/UserCurse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { mongoIdParam, paginationQuery, trimmedString } from '../utils/validators.js';
 
@@ -29,6 +30,19 @@ userRouter.get(
 );
 
 userRouter.get('/:id', validate([mongoIdParam()]), asyncHandler(userController.getById));
+
+// Dueño o admin (lo verifica el service).
+userRouter.get(
+  '/:id/curses',
+  validate([
+    mongoIdParam(),
+    query('status')
+      .optional()
+      .isIn(USER_CURSE_STATUSES)
+      .withMessage(`"status" debe ser uno de: ${USER_CURSE_STATUSES.join(', ')}`),
+  ]),
+  asyncHandler(userController.curses),
+);
 
 // Dueño o admin: lo resuelve el service (la propiedad no es un rol global).
 userRouter.put(

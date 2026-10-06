@@ -475,13 +475,20 @@ async function seed(): Promise<void> {
     const resolved = a.status === 'closed' || a.status === 'cancelled';
     const outcome = resolve(a.bids);
 
+    const house = must(
+      OBJECTS.find((o) => o.key === a.object),
+      a.object,
+    ).house;
     const auction = await Auction.create({
       object: object._id,
       status: a.status,
       opensAt: a.opensAt,
       closesAt: a.closesAt,
+      createdBy: userId(headOf(house)),
       ...(resolved && {
         resolvedAt: a.resolvedAt,
+        // El seed aplica él mismo los efectos del cierre: quedan liquidadas.
+        settledAt: a.resolvedAt,
         winner: outcome.winner ? userId(outcome.winner[0]) : undefined,
         winningBid: outcome.winner?.[1],
         cancellationReason: outcome.cancellationReason,

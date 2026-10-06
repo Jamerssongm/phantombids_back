@@ -2,6 +2,7 @@ import type { Server } from 'node:http';
 import { app } from './app.js';
 import { connectDB, disconnectDB } from './config/database.js';
 import { env } from './config/env.js';
+import { startAuctionScheduler, stopAuctionScheduler } from './services/scheduler.service.js';
 
 let server: Server | undefined;
 let shuttingDown = false;
@@ -24,6 +25,8 @@ async function shutdown(signal: string, exitCode = 0): Promise<void> {
       );
       console.log('Servidor HTTP cerrado');
     }
+    // Antes de cerrar la base: una pasada a medio liquidar no debe perder la conexión.
+    await stopAuctionScheduler();
     await disconnectDB();
     console.log('Conexión a MongoDB cerrada');
   } catch (error) {
@@ -46,6 +49,8 @@ process.on('uncaughtException', (error) => {
 
 async function main(): Promise<void> {
   await connectDB();
+  if (env.AUTO_CLOSE_ENABLED) startAuctionScheduler();
+  else console.log('⏱️  Scheduler de subastas desactivado (AUTO_CLOSE_ENABLED=false)');
   server = app.listen(env.PORT, () => {
     console.log(`👻 PhantomBids API escuchando en el puerto ${env.PORT} (${env.NODE_ENV})`);
   });

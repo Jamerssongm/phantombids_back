@@ -10,7 +10,7 @@
 > frontend maquetado, no puede dejar esas decisiones sin tomar.
 >
 > **Toda la lógica derivada de este documento vive aislada en módulos propios**
-> (`services/auctionResolver.service.ts`, `services/reputation.service.ts`,
+> (`services/auctionResolver.ts`, `services/reputation.service.ts`,
 > `services/ranking.service.ts`) para poder reemplazarla cuando la docente
 > entregue las reglas definitivas, sin tocar el resto del sistema.
 >
@@ -69,6 +69,42 @@ Pujas: `[12, 15, 15, 18, 20, 20, 23]`
 
 Si en cambio las pujas fueran `[15, 15, 20, 20]`, ningún monto sería único y la
 subasta se cancelaría, penalizando a los cuatro.
+
+---
+
+## 2b. Ciclo de vida de una subasta
+
+El enunciado no define cómo transita una subasta entre estados. Se asume:
+
+| Transición | Cuándo |
+|---|---|
+| (creación) → `scheduled` | Al crearla. Exige `opensAt` en el futuro y `closesAt > opensAt` |
+| `scheduled` → `open` | Al alcanzarse `opensAt` |
+| `open` → `closed` / `cancelled` | Al alcanzarse `closesAt`, o antes por cierre manual |
+
+- Las transiciones por tiempo las aplica un proceso periódico (cada minuto,
+  desactivable con `AUTO_CLOSE_ENABLED`) **y además** cualquier acceso a la
+  subasta (consultarla, pujar, apostar, pedir el resultado). Así el resultado es
+  correcto aunque el servidor haya estado dormido (Render gratuito) o el proceso
+  periódico esté apagado.
+- Una puja solo se acepta con la subasta `open` **y** la hora actual dentro de
+  `[opensAt, closesAt)`. Una puja que llega después de `closesAt` se rechaza
+  aunque la subasta todavía figure `open`.
+- **Cierre manual:** el `head_haunter` de la casa o un `admin` pueden cerrar una
+  subasta `open` antes de `closesAt`. Se resuelve igual que un cierre por tiempo.
+- Un objeto tiene como máximo **una subasta activa** (`scheduled` u `open`) a la
+  vez.
+- Crear una subasta: miembro de la casa del objeto, o `admin`. Editarla o
+  borrarla: quien la creó, el `head_haunter` de la casa, o `admin`, y solo
+  mientras esté `scheduled` (una `scheduled` todavía no tiene pujas).
+
+### Secreto de las pujas
+
+- Mientras la subasta esté `scheduled` u `open`, la API **no expone** montos
+  ajenos, ni la cantidad de pujas, ni nada de lo que se puedan deducir. Cada
+  usuario ve solo su propia puja.
+- Al cerrarse (`closed` o `cancelled`), todas las pujas pasan a ser públicas, con
+  el alias de quien pujó y la marca de duplicada.
 
 ---
 
@@ -141,6 +177,30 @@ definir algo distinto. El modelo de datos ya guarda todo lo necesario
 - **No se puede apostar por uno mismo.**
 - El alias objetivo debe ser un participante real de esa subasta.
 
+### Mecánica de la API
+
+- Se apuesta indicando el **alias** del usuario objetivo (`targetAlias`).
+- **Cancelación:** la apuesta pasa a `cancelled`, se devuelven las fichas y se
+  borra. El estado intermedio `cancelled` existe para que un cierre concurrente
+  de la subasta no la resuelva mientras se devuelve. Al borrarse, el usuario
+  puede volver a apostar en esa subasta mientras siga abierta.
+- Si la subasta se cierra mientras se registra una apuesta, la apuesta se
+  cancela y se devuelven las fichas.
+
+### Conflicto abierto: participación vs secreto
+
+La regla "el alias objetivo debe ser un participante real" choca con el secreto
+de las pujas (§2b). Para validarla, la API tiene que responder distinto según el
+alias haya pujado o no, y eso permite **sondear quién participa** probando
+aliases (nunca cuánto pujó). El frontend mock directamente lista los
+participantes de una subasta abierta.
+
+Mitigación actual: el mismo mensaje ("el alias indicado no participa en esta
+subasta") para un alias inexistente y para uno que no pujó, y **no** existe un
+endpoint que liste participantes. **Pendiente de decisión:** o se acepta que la
+participación (no el monto) es pública, o se elimina la validación de
+participación.
+
 ### Resolución
 
 | Desenlace | Resultado de la apuesta |
@@ -172,6 +232,15 @@ Reglas comunes:
 - Los usuarios dados de baja (`isActive: false`) no aparecen.
 - Se calculan con **pipelines de agregación de MongoDB**, no cargando las
   colecciones a memoria.
+- **Free Spirit, interpretación adoptada:** se cuentan las subastas ya
+  resueltas (`closed` o `cancelled`) en las que el usuario pujó **y su puja no
+  quedó duplicada**, es decir, las participaciones que no le costaron una
+  maldición. La otra lectura posible (participaciones de usuarios que nunca
+  recibieron ninguna maldición) dejaría fuera para siempre a quien se equivocó
+  una vez. Pendiente de confirmar con la docente.
+- Solo cuentan subastas ya liquidadas: una subasta abierta todavía no define si
+  una puja es duplicada.
+- Empates: se ordena por alias, para que la paginación sea estable.
 
 ---
 
