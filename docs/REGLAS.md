@@ -91,6 +91,18 @@ subasta se cancelaría, penalizando a los cuatro.
 - El catálogo tiene **8 maldiciones predefinidas**, con nombre, descripción,
   icono y **duración en horas** (entre 12 y 72 según severidad).
 - Son datos de catálogo, administrados solo por `admin`. No las crea el usuario.
+- Escala de duración por severidad (`Curse.severity`):
+
+| Severidad | Duración |
+|---|---|
+| `minor` | 12 a 24 horas |
+| `moderate` | 36 a 48 horas |
+| `severe` | 72 horas |
+
+  El schema solo exige el rango global de 12 a 72 horas. La escala por severidad
+  es la que usa el catálogo sembrado (`src/utils/seed.ts`), y un `admin` que
+  cree o edite una maldición debería respetarla.
+
 - Estados de una maldición asignada (`UserCurse`):
 
 | Estado | Significado |

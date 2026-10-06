@@ -92,14 +92,11 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
   el modelo. `models/index.ts` reexporta todo.
 - Todos usan `baseSchemaOptions` (`utils/schemaOptions.ts`): `timestamps` y
   `toJSON` que convierte `_id` en `id` string y quita `__v` y `passwordHash`.
-  Responder siempre con el documento (o `doc.toJSON()`), **nunca con `.lean()`**,
-  que se saltea el transform y filtra `_id`/`__v`.
 - `User.passwordHash` es `select: false`. Para el login:
   `.select('+passwordHash')`.
 - **Validadores entre campos** (`maxBid > minBid`, `closesAt > opensAt`,
-  `bettor ≠ targetUser`, `expiresAt > imposedAt`) viven en `pre('validate')`:
-  corren en `save()`/`create()`/`validate()`, **no en `findOneAndUpdate`**.
-  Los services actualizan con `doc.set(...)` + `doc.save()`.
+  `bettor ≠ targetUser`, `expiresAt > imposedAt`) viven en `pre('validate')`.
+  Ver las reglas duras de abajo.
 - `unique` no es un validador: un duplicado llega como error del driver
   `E11000` (en inglés). El middleware global de errores lo traduce a 409 con
   mensaje en español.
@@ -110,6 +107,17 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
   varios modelos (`opensAt`/`closesAt` vs `startsAt`/`endsAt`, refs `house`,
   `curse`, `user` vs `houseId`, `curseId`, `userId`, etc.). El frontend se
   adapta al backend al reemplazar los mocks.
+
+### Reglas duras de persistencia
+
+1. **Nada que venga de `.lean()` se devuelve en una respuesta sin pasar por un
+   serializador explícito.** `.lean()` se saltea el transform de `toJSON`: la
+   respuesta saldría con `_id` y `__v` y, si se pidió `+passwordHash`, con el
+   hash. Por defecto se responde con el documento de Mongoose.
+2. **Los validadores de `pre('validate')` NO corren en `findOneAndUpdate`,
+   `updateOne` ni `updateMany`** (ni siquiera con `runValidators: true`, que
+   solo corre validadores de campo). Toda validación entre campos en un update
+   va en el service, a mano, o se actualiza con `doc.set(...)` + `doc.save()`.
 
 ## Despliegue
 
@@ -151,8 +159,38 @@ Error:
 { "success": false, "error": { "message": "…", "code": "…", "details": [] } }
 ```
 
-Códigos HTTP correctos siempre (criterio 6): 201 al crear, 400 validación,
-401 sin token o token inválido, 403 sin permiso, 404 no encontrado, 409 conflicto.
+Helpers en `utils/apiResponse.ts` (`ok`, `created`, `paginated`); errores
+siempre con `throw AppError.xxx(...)` y nunca con `res.status(4xx).json(...)`
+a mano.
+
+Códigos HTTP correctos siempre (criterio 6):
+
+| Código | Cuándo |
+|---|---|
+| 200 / 201 | éxito / recurso creado |
+| 400 | request mal formada: JSON inválido, ObjectId mal formado |
+| 401 | sin token, token inválido o vencido |
+| 403 | autenticado pero sin permiso |
+| 404 | recurso o ruta inexistente |
+| 409 | conflicto: clave duplicada (E11000), estado que no admite la operación |
+| 422 | validación: express-validator o ValidationError de Mongoose |
+| 500 | bug; en producción sin stack ni mensaje interno |
+
+### Errores y validación (src/middlewares, src/utils)
+
+- `utils/AppError.ts`: error operacional (`isOperational: true`) con factories
+  `badRequest`, `unauthorized`, `forbidden`, `notFound`, `conflict`,
+  `unprocessable`, `internal`.
+- `utils/asyncHandler.ts`: envolver **todo** handler async. En Express 4 un
+  rechazo sin capturar no llega al errorHandler.
+- `middlewares/validate.ts`: único punto de entrada de express-validator:
+  `router.post('/', validate([...cadenas]), asyncHandler(controller))`.
+- `utils/validators.ts`: `mongoIdParam`, `paginationQuery`, `trimmedString`.
+- `utils/pagination.ts`: `getPagination(req.query)` → `{ page, limit, skip }` y
+  `buildMeta(total, pagination)`.
+- `middlewares/errorHandler.ts`: montado al final de `app.ts`. Para que un
+  índice único nuevo tenga mensaje legible en 409, agregarlo a
+  `DUPLICATE_KEY_MESSAGES`.
 
 ## Variables de entorno
 
