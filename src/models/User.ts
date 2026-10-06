@@ -1,4 +1,4 @@
-import { Schema, model, type Types } from 'mongoose';
+import { Schema, model, type HydratedDocument, type Types } from 'mongoose';
 import { URL_PATTERN, baseSchemaOptions } from '../utils/schemaOptions.js';
 
 export const USER_ROLES = ['admin', 'user'] as const;
@@ -76,3 +76,6 @@ const userSchema = new Schema<IUser>(
 );
 
 export const User = model<IUser>('User', userSchema);
+
+/** Documento de usuario cargado desde la base (el que queda en req.user). */
+export type UserDocument = HydratedDocument<IUser>;

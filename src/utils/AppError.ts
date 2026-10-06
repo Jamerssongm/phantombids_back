@@ -59,6 +59,13 @@ export class AppError extends Error {
     return new AppError(422, message, code, details);
   }
 
+  static tooManyRequests(
+    message = 'Demasiadas solicitudes, probá de nuevo más tarde',
+    code = 'TOO_MANY_REQUESTS',
+  ) {
+    return new AppError(429, message, code);
+  }
+
   static internal(message = 'Error interno del servidor', code = 'INTERNAL_ERROR') {
     return new AppError(500, message, code);
   }

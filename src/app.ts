@@ -7,6 +7,7 @@ import { getDbStatus } from './config/database.js';
 import { env } from './config/env.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { testRouter } from './routes/_test.routes.js';
+import { apiRouter } from './routes/index.js';
 import { AppError } from './utils/AppError.js';
 import { ok } from './utils/apiResponse.js';
 
@@ -17,6 +18,10 @@ const { version: API_VERSION } = createRequire(import.meta.url)('../package.json
 };
 
 export const app = express();
+
+// Render pone un proxy delante: sin esto, req.ip sería la IP del proxy y el rate
+// limit contaría a todos los clientes como uno solo.
+app.set('trust proxy', 1);
 
 // morgan va primero: si va después de express.json(), las peticiones con JSON mal
 // formado fallan antes de llegar a él y nunca quedan registradas.
@@ -42,6 +47,8 @@ app.get('/health', (_req: Request, res: Response) => {
     environment: env.NODE_ENV,
   });
 });
+
+app.use('/api', apiRouter);
 
 if (!env.isProduction) {
   // TODO(b06): quitar junto con src/routes/_test.routes.ts.

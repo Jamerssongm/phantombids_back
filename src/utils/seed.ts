@@ -407,8 +407,8 @@ async function seed(): Promise<void> {
   const curses = await Curse.insertMany(CURSES);
   const curseByName = new Map(curses.map((c) => [c.name, c]));
 
-  // Users — TODO(b03): cuando exista el hook pre('save') de hashing en User,
-  // pasar la contraseña en texto plano y dejar que el modelo la hashee.
+  // Users — hasheo explícito, igual que auth.service. No hay hook pre('save') de
+  // hashing a propósito: ver "Contraseñas" en CLAUDE.md.
   const [adminHash, userHash] = await Promise.all([
     bcrypt.hash(ADMIN.password, env.BCRYPT_ROUNDS),
     bcrypt.hash(USER_PASSWORD, env.BCRYPT_ROUNDS),
