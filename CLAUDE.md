@@ -86,6 +86,8 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
 3. **La opción `background` en índices fue eliminada.** No usarla en
    `schema.index()` ni en `index: { background: true }`.
 4. **`FilterQuery` ya no existe: se llama `QueryFilter<T>`.**
+5. **Los updates con pipeline** (`updateOne(filter, [{ $set: … }])`) exigen la
+   opción `{ updatePipeline: true }` en cada query; sin ella Mongoose los rechaza.
 
 ## Modelos (src/models/)
 

@@ -72,6 +72,42 @@ subasta se cancelaría, penalizando a los cuatro.
 
 ---
 
+## 2b. Ciclo de vida de una subasta
+
+El enunciado no define cómo transita una subasta entre estados. Se asume:
+
+| Transición | Cuándo |
+|---|---|
+| (creación) → `scheduled` | Al crearla. Exige `opensAt` en el futuro y `closesAt > opensAt` |
+| `scheduled` → `open` | Al alcanzarse `opensAt` |
+| `open` → `closed` / `cancelled` | Al alcanzarse `closesAt`, o antes por cierre manual |
+
+- Las transiciones por tiempo las aplica un proceso periódico (cada minuto,
+  desactivable con `AUTO_CLOSE_ENABLED`) **y además** cualquier acceso a la
+  subasta (consultarla, pujar, apostar, pedir el resultado). Así el resultado es
+  correcto aunque el servidor haya estado dormido (Render gratuito) o el proceso
+  periódico esté apagado.
+- Una puja solo se acepta con la subasta `open` **y** la hora actual dentro de
+  `[opensAt, closesAt)`. Una puja que llega después de `closesAt` se rechaza
+  aunque la subasta todavía figure `open`.
+- **Cierre manual:** el `head_haunter` de la casa o un `admin` pueden cerrar una
+  subasta `open` antes de `closesAt`. Se resuelve igual que un cierre por tiempo.
+- Un objeto tiene como máximo **una subasta activa** (`scheduled` u `open`) a la
+  vez.
+- Crear una subasta: miembro de la casa del objeto, o `admin`. Editarla o
+  borrarla: quien la creó, el `head_haunter` de la casa, o `admin`, y solo
+  mientras esté `scheduled` (una `scheduled` todavía no tiene pujas).
+
+### Secreto de las pujas
+
+- Mientras la subasta esté `scheduled` u `open`, la API **no expone** montos
+  ajenos, ni la cantidad de pujas, ni nada de lo que se puedan deducir. Cada
+  usuario ve solo su propia puja.
+- Al cerrarse (`closed` o `cancelled`), todas las pujas pasan a ser públicas, con
+  el alias de quien pujó y la marca de duplicada.
+
+---
+
 ## 3. Penalización por puja duplicada
 
 - Si dos o más usuarios ofrecen **el mismo monto**, **todos** quedan marcados
