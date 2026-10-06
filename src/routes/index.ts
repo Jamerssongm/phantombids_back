@@ -5,6 +5,7 @@ import { betRouter } from './bet.routes.js';
 import { curseRouter } from './curse.routes.js';
 import { houseRouter } from './house.routes.js';
 import { objectRouter } from './object.routes.js';
+import { rankingRouter } from './ranking.routes.js';
 import { userRouter } from './user.routes.js';
 
 /** Router raíz de la API, montado en /api. */
@@ -17,3 +18,4 @@ apiRouter.use('/houses', houseRouter);
 apiRouter.use('/objects', objectRouter);
 apiRouter.use('/auctions', auctionRouter);
 apiRouter.use('/bets', betRouter);
+apiRouter.use('/rankings', rankingRouter);

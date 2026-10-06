@@ -232,6 +232,15 @@ Reglas comunes:
 - Los usuarios dados de baja (`isActive: false`) no aparecen.
 - Se calculan con **pipelines de agregación de MongoDB**, no cargando las
   colecciones a memoria.
+- **Free Spirit, interpretación adoptada:** se cuentan las subastas ya
+  resueltas (`closed` o `cancelled`) en las que el usuario pujó **y su puja no
+  quedó duplicada**, es decir, las participaciones que no le costaron una
+  maldición. La otra lectura posible (participaciones de usuarios que nunca
+  recibieron ninguna maldición) dejaría fuera para siempre a quien se equivocó
+  una vez. Pendiente de confirmar con la docente.
+- Solo cuentan subastas ya liquidadas: una subasta abierta todavía no define si
+  una puja es duplicada.
+- Empates: se ordena por alias, para que la paginación sea estable.
 
 ---
 
