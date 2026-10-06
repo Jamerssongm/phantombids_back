@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { body, query } from 'express-validator';
 import * as auctionController from '../controllers/auction.controller.js';
+import * as bidController from '../controllers/bid.controller.js';
 import { autenticar, autenticarOpcional } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 import { AUCTION_STATUSES } from '../models/Auction.js';
@@ -69,6 +70,13 @@ auctionRouter.get(
   '/:id/result',
   validate([mongoIdParam()]),
   asyncHandler(auctionController.result),
+);
+
+// Pública, también con la subasta abierta: alias de quienes pujaron, sin montos.
+auctionRouter.get(
+  '/:id/participants',
+  validate([mongoIdParam()]),
+  asyncHandler(bidController.participants),
 );
 
 auctionRouter.use('/:id/bids', bidRouter);

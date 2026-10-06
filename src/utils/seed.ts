@@ -279,6 +279,9 @@ interface AuctionSeed {
 
 // Las pujas de las subastas resueltas reproducen los ejemplos del frontend
 // (auction-4, auction-5, auction-6) y la regla de puja única más baja de REGLAS.md §2.
+// Las apuestas de las subastas resueltas están pensadas para que LOS CUATRO
+// rankings tengan datos: Gelido, Sombrío, Umbral y Fantasmal llegan al mínimo de
+// 3 apuestas resueltas de Betting Prophet, con tasas de acierto distintas.
 const AUCTIONS: AuctionSeed[] = [
   {
     object: 'grapadora',
@@ -329,6 +332,9 @@ const AUCTIONS: AuctionSeed[] = [
     bets: [
       ['Sombrio_042', 'Nocturno_186', 10],
       ['Nebuloso_207', 'Silente_401', 5],
+      ['Gelido_058', 'Nocturno_186', 10],
+      ['Umbral_333', 'Silente_401', 5],
+      ['Fantasmal_290', 'Errante_119', 5],
     ],
   },
   {
@@ -346,6 +352,9 @@ const AUCTIONS: AuctionSeed[] = [
     bets: [
       ['Gelido_058', 'Fantasmal_290', 25],
       ['Nocturno_186', 'Sombrio_042', 5],
+      ['Sombrio_042', 'Umbral_333', 5],
+      ['Umbral_333', 'Fantasmal_290', 10],
+      ['Fantasmal_290', 'Sombrio_042', 5],
     ],
   },
   {
@@ -361,7 +370,32 @@ const AUCTIONS: AuctionSeed[] = [
       ['Gelido_058', 55],
       ['Sombrio_042', 55],
     ],
-    bets: [['Errante_119', 'Gelido_058', 10]],
+    bets: [
+      ['Errante_119', 'Gelido_058', 10],
+      ['Gelido_058', 'Nocturno_186', 5],
+      ['Umbral_333', 'Gelido_058', 5],
+      ['Sombrio_042', 'Nebuloso_207', 5],
+      ['Fantasmal_290', 'Sombrio_042', 5],
+    ],
+  },
+  {
+    // 60 duplicado → gana 75 (Silente_401); 90 es único pero no el más bajo.
+    object: 'sombrero',
+    status: 'closed',
+    opensAt: at(-96),
+    closesAt: at(-48),
+    resolvedAt: at(-48),
+    bids: [
+      ['Errante_119', 60],
+      ['Silente_401', 75],
+      ['Gelido_058', 90],
+      ['Umbral_333', 60],
+    ],
+    bets: [
+      ['Sombrio_042', 'Silente_401', 10],
+      ['Fantasmal_290', 'Gelido_058', 5],
+      ['Nocturno_186', 'Errante_119', 5],
+    ],
   },
 ];
 
