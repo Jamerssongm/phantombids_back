@@ -33,5 +33,7 @@ services:
         sync: false
       - key: CORS_ORIGIN
         sync: false
+      # Siempre true: el scheduler recupera al arrancar las subastas que vencieron
+      # mientras el servicio gratuito estaba dormido (ver docs/DESPLIEGUE.md).
       - key: AUTO_CLOSE_ENABLED
-        sync: false
+        value: 'true'
