@@ -49,16 +49,21 @@ Impuesto por la rúbrica de la asignatura; no es una elección de diseño libre.
 
 ## Arranque local
 
-Requisitos: Node.js 20.19 o superior, npm y Docker. Paso a paso detallado y
-solución de problemas en [`docs/ENTREGA.md`](docs/ENTREGA.md).
+Requisitos: Node.js 20.19 o superior y npm, más una base MongoDB: un cluster
+gratuito de **MongoDB Atlas** (el mismo que usa Render, con una base aparte
+`phantombids_dev`) o **Docker**.
+
+**¿Windows?** Seguí [`docs/ENTREGA.md`](docs/ENTREGA.md): tiene cada comando en
+PowerShell, los dos caminos (Atlas recomendado, Docker Desktop como alternativa)
+y la solución de problemas. El resumen de abajo es para bash con Docker.
 
 ```bash
 git clone git@github.com:parra0727/phantombids_back.git
 cd phantombids_back
 npm install
 
-# MongoDB local en Docker
-docker run -d --name phantombids-mongo -p 27017:27017 mongo:7
+# MongoDB local en Docker (8.2: mongo:8 / latest no arrancan en kernels Linux 6.19+)
+docker run -d --name phantombids-mongo -p 27017:27017 mongo:8.2
 
 # Variables de entorno
 cp .env.example .env
