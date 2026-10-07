@@ -191,6 +191,30 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
 - El scheduler (`scheduler.service.ts`) arranca en `index.ts` si
   `AUTO_CLOSE_ENABLED` y se detiene en el shutdown antes de cerrar la base.
 
+## Documentación OpenAPI (Swagger)
+
+- UI en `/api/docs`, especificación en `/api/docs.json`. Componentes
+  reutilizables (schemas, respuestas `XOk`/`XCreated`/`XList`/`XPage`,
+  parámetros, `bearerAuth`) en `src/config/swagger.ts`.
+- **Todo endpoint nuevo lleva su bloque `/** @openapi ... */` encima de la
+  ruta** en `src/routes/*.routes.ts`.
+- swagger-jsdoc lee comentarios de archivos fuente: la carpeta se resuelve
+  relativa a `import.meta.url` y el patrón acepta `.ts` y `.js`, así funciona con
+  `npm run dev` (src) y con `npm start` (dist). **No activar `removeComments`**
+  en tsconfig: dejaría la documentación vacía en producción.
+- No usar anclas YAML (`&id` / `*id`) en los bloques: swagger-jsdoc descarta la
+  operación en silencio.
+- Verificar con `npm run build && npm start` y `GET /api/docs.json`, no solo en dev.
+
+## Logs
+
+- `utils/logger.ts` (`logger.info/warn/error/debug`): timestamp ISO + nivel,
+  silencioso con `NODE_ENV=test`, `debug` solo fuera de producción. **No usar
+  `console.*`** en el código de la app.
+- Excepciones deliberadas: `utils/seed.ts` (script de consola) y
+  `config/env.ts` (falla antes de que exista la configuración que el logger usa).
+- Las peticiones HTTP las registra morgan, solo fuera de producción.
+
 ## Despliegue
 
 Render, servicio web gratuito, configurado en `render.yaml`. Guía completa y

@@ -100,11 +100,19 @@ El enunciado no define cómo transita una subasta entre estados. Se asume:
 
 ### Secreto de las pujas
 
-- Mientras la subasta esté `scheduled` u `open`, la API **no expone** montos
-  ajenos, ni la cantidad de pujas, ni nada de lo que se puedan deducir. Cada
-  usuario ve solo su propia puja.
-- Al cerrarse (`closed` o `cancelled`), todas las pujas pasan a ser públicas, con
-  el alias de quien pujó y la marca de duplicada.
+**El secreto del producto es el MONTO de la puja, no la participación.**
+
+| Dato | Mientras `scheduled` / `open` | Al cerrarse |
+|---|---|---|
+| Monto de cada puja | **Secreto.** Cada usuario ve solo el suyo | Público |
+| Quién pujó (alias) y cuántos | Público: `GET /api/auctions/:id/participants` | Público |
+| Puja duplicada (`isDuplicate`) | No existe todavía: se decide al cerrar | Público |
+
+- La participación es pública porque las apuestas paralelas (§5) la necesitan:
+  para apostar por quién gana hay que saber quién compite. El frontend ya
+  muestra un selector de participantes en la subasta abierta.
+- La lista de participantes no incluye montos, ni el orden en que se pujó (se
+  ordena por alias), ni nada de lo que se pueda deducir un monto.
 
 ---
 
@@ -187,19 +195,11 @@ definir algo distinto. El modelo de datos ya guarda todo lo necesario
 - Si la subasta se cierra mientras se registra una apuesta, la apuesta se
   cancela y se devuelven las fichas.
 
-### Conflicto abierto: participación vs secreto
+### Participación del alias objetivo
 
-La regla "el alias objetivo debe ser un participante real" choca con el secreto
-de las pujas (§2b). Para validarla, la API tiene que responder distinto según el
-alias haya pujado o no, y eso permite **sondear quién participa** probando
-aliases (nunca cuánto pujó). El frontend mock directamente lista los
-participantes de una subasta abierta.
-
-Mitigación actual: el mismo mensaje ("el alias indicado no participa en esta
-subasta") para un alias inexistente y para uno que no pujó, y **no** existe un
-endpoint que liste participantes. **Pendiente de decisión:** o se acepta que la
-participación (no el monto) es pública, o se elimina la validación de
-participación.
+El alias objetivo tiene que haber pujado en esa subasta (422 si no). No choca con
+el secreto: la participación es pública (§2b, "Secreto de las pujas"); lo
+secreto es el monto.
 
 ### Resolución
 
@@ -221,7 +221,7 @@ Los cuatro tableros del enunciado, con la métrica que se asume para cada uno:
 |---|---|---|
 | **Worst Bidder** | Número de pujas marcadas como duplicadas | Descendente |
 | **Total Cursed** | Número de maldiciones recibidas en toda su historia | Descendente |
-| **Free Spirit** | Número de subastas en las que participó sin haber recibido ninguna maldición | Descendente |
+| **Free Spirit** | Número de subastas ya liquidadas en las que el usuario pujó **y su puja no quedó duplicada** (participaciones limpias) | Descendente |
 | **Betting Prophet** | Tasa de acierto en apuestas: ganadas ÷ resueltas | Descendente |
 
 Reglas comunes:
@@ -229,15 +229,17 @@ Reglas comunes:
 - **Betting Prophet** exige un mínimo de **3 apuestas resueltas** para aparecer
   en el ranking. Sin ese mínimo, un usuario con una sola apuesta acertada
   tendría 100% y encabezaría el tablero.
+- **Free Spirit cuenta participaciones, no usuarios.** Cada subasta liquidada en
+  la que el usuario pujó sin duplicar suma 1, aunque en otra subasta sí haya
+  recibido una maldición. Se eligió así por dos razones:
+  - **Es gradual:** una puja duplicada no saca a nadie del ranking para siempre;
+    solo deja de sumar en esa subasta.
+  - **Es simétrica con Worst Bidder:** Worst Bidder cuenta las pujas
+    duplicadas de cada usuario y Free Spirit las no duplicadas, sobre las mismas
+    subastas liquidadas. Entre los dos describen todas las participaciones.
 - Los usuarios dados de baja (`isActive: false`) no aparecen.
 - Se calculan con **pipelines de agregación de MongoDB**, no cargando las
   colecciones a memoria.
-- **Free Spirit, interpretación adoptada:** se cuentan las subastas ya
-  resueltas (`closed` o `cancelled`) en las que el usuario pujó **y su puja no
-  quedó duplicada**, es decir, las participaciones que no le costaron una
-  maldición. La otra lectura posible (participaciones de usuarios que nunca
-  recibieron ninguna maldición) dejaría fuera para siempre a quien se equivocó
-  una vez. Pendiente de confirmar con la docente.
 - Solo cuentan subastas ya liquidadas: una subasta abierta todavía no define si
   una puja es duplicada.
 - Empates: se ordena por alias, para que la paginación sea estable.
@@ -332,5 +334,6 @@ Lista para trasladar al README y usar como respaldo en la sustentación.
 | 6 | Condición exacta de puja duplicada | Mismo monto exacto ofrecido por dos o más usuarios |
 | 7 | Reglas de apuestas más allá del 3× | Fichas 5/10/25/50, una por subasta, cancelable, no sobre uno mismo |
 | 8 | Métrica de cada ranking | Definida en la sección 6 de este documento |
+| 11 | Visibilidad de la participación | Pública (alias y cantidad); el secreto es el monto (§2b) |
 | 9 | Permisos de los roles de casa | Solo `head_haunter` administra |
 | 10 | Alcance del backend | API REST completa con persistencia en MongoDB Atlas |

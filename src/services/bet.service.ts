@@ -59,13 +59,21 @@ export async function placeBet(
   actor: UserDocument,
   input: PlaceBetInput,
 ): Promise<SideBetDocument> {
-  const auction = await syncLifecycle(await findAuctionOr404(input.auction));
+  // `auction` viene del body: si no existe es un dato inválido (422), no un
+  // recurso de la URL inexistente (404). Misma convención que objects y auctions.
+  const found = await Auction.findById(input.auction);
+  if (!found) {
+    const message = 'La subasta indicada no existe';
+    throw AppError.unprocessable(message, [{ field: 'auction', value: input.auction, message }]);
+  }
+  const auction = await syncLifecycle(found);
   if (auction.status !== 'open' || new Date() >= auction.closesAt) {
     throw auctionClosed('Solo se puede apostar en una subasta abierta');
   }
 
-  // Mismo mensaje para "no existe" y "no pujó": reduce lo que se puede sondear
-  // (ver el conflicto documentado en REGLAS.md §5).
+  // La participación es pública (REGLAS.md §2b): no hay nada que ocultar acá.
+  // Se usa el mismo mensaje para "no existe" y "no pujó" porque para quien apuesta
+  // es la misma situación.
   const notParticipant = 'El alias indicado no participa en esta subasta';
   const target = await User.findOne({ alias: input.targetAlias }).select('_id alias');
   if (target && sameId(target._id, actor._id)) {

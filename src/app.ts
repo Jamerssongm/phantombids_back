@@ -2,11 +2,12 @@ import cors from 'cors';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import swaggerUi from 'swagger-ui-express';
 import { createRequire } from 'node:module';
 import { getDbStatus } from './config/database.js';
 import { env } from './config/env.js';
+import { swaggerSpec } from './config/swagger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
-import { testRouter } from './routes/_test.routes.js';
 import { apiRouter } from './routes/index.js';
 import { AppError } from './utils/AppError.js';
 import { ok } from './utils/apiResponse.js';
@@ -28,16 +29,70 @@ if (env.isProduction) app.set('trust proxy', 1);
 // morgan va primero: si va después de express.json(), las peticiones con JSON mal
 // formado fallan antes de llegar a él y nunca quedan registradas.
 if (!env.isProduction) app.use(morgan('dev'));
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        // upgrade-insecure-requests fuerza https en los recursos de Swagger UI: en
+        // local (http) los rompería. En producción (Render, https) se mantiene.
+        upgradeInsecureRequests: env.isProduction ? [] : null,
+      },
+    },
+  }),
+);
 app.use(cors({ origin: [...env.CORS_ORIGIN] }));
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
+/**
+ * @openapi
+ * /:
+ *   get:
+ *     tags:
+ *     - Sistema
+ *     summary: Información de la API
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/ApiInfoOk'
+ */
 app.get('/', (_req: Request, res: Response) => {
   ok(res, { name: API_NAME, version: API_VERSION, docs: '/api/docs' });
 });
 
 // Render y los monitores leen el código de estado: base caída => 503, no 200.
+/**
+ * @openapi
+ * /health:
+ *   get:
+ *     tags:
+ *     - Sistema
+ *     summary: Estado del servicio y de la base
+ *     responses:
+ *       200:
+ *         description: Servicio sano y base conectada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: ok
+ *                 uptime:
+ *                   type: number
+ *                 db:
+ *                   type: string
+ *                   enum:
+ *                   - connected
+ *                   - disconnected
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 environment:
+ *                   type: string
+ *       503:
+ *         description: Base desconectada (status "degraded"). Render usa este código como health check.
+ */
 app.get('/health', (_req: Request, res: Response) => {
   const db = getDbStatus();
   const healthy = db === 'connected';
@@ -50,12 +105,20 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
-app.use('/api', apiRouter);
+// Documentación: UI en /api/docs y la especificación cruda en /api/docs.json.
+app.get('/api/docs.json', (_req: Request, res: Response) => {
+  res.json(swaggerSpec);
+});
+app.use(
+  '/api/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: 'PhantomBids API — Docs',
+    swaggerOptions: { persistAuthorization: true },
+  }),
+);
 
-if (!env.isProduction) {
-  // TODO(b06): quitar junto con src/routes/_test.routes.ts.
-  app.use('/api/_test', testRouter);
-}
+app.use('/api', apiRouter);
 
 // 404: toda ruta no encontrada pasa por el mismo camino que cualquier otro error.
 app.use((req: Request, _res: Response, next: NextFunction) => {

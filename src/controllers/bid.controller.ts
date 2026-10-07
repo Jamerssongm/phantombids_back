@@ -25,3 +25,7 @@ export async function mine(req: Request<AuctionParams>, res: Response) {
 export async function revealed(req: Request<AuctionParams>, res: Response) {
   ok(res, await bidService.listRevealedBids(req.params.id));
 }
+
+export async function participants(req: Request<AuctionParams>, res: Response) {
+  ok(res, await bidService.listParticipants(req.params.id));
+}

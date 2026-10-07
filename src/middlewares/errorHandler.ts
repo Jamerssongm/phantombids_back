@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { env } from '../config/env.js';
 import { AppError, isAppError, type ErrorDetail } from '../utils/AppError.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Mensajes legibles para cada índice único, por "<colección>.<índice>".
@@ -106,7 +107,7 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, req, res, next
 
   if (appError) {
     // Esperado: una línea alcanza, sin stack.
-    console.warn(`[${appError.statusCode}] ${where} ${appError.code}: ${appError.message}`);
+    logger.warn(`[${appError.statusCode}] ${where} ${appError.code}: ${appError.message}`);
     res.status(appError.statusCode).json({
       success: false,
       error: { message: appError.message, code: appError.code, details: appError.details },
@@ -116,7 +117,7 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, req, res, next
 
   // Bug o error no contemplado: log completo en el servidor, y al cliente solo lo
   // que corresponde. En producción nunca se filtran mensaje interno ni stack.
-  console.error(`[500] ${where}`, error);
+  logger.error(`[500] ${where}`, error);
   const err = error instanceof Error ? error : new Error(String(error));
   res.status(500).json({
     success: false,

@@ -13,7 +13,8 @@ export async function register(
 ) {
   const { email, password, displayName, avatarUrl } = req.body;
   const { user, token } = await authService.register({ email, password, displayName, avatarUrl });
-  created(res, { user, token });
+  // Location apunta al perfil del usuario creado (montado en /api/users).
+  created(res, { user, token }, `/api/users/${user.id as string}`);
 }
 
 export async function login(req: Request<object, unknown, authService.LoginInput>, res: Response) {
@@ -33,10 +34,4 @@ export async function updateMe(
   const { displayName, avatarUrl } = req.body;
   const user = await authService.updateMe(getAuthUser(req), { displayName, avatarUrl });
   ok(res, user);
-}
-
-// TODO(b06): borrar junto con la ruta /api/auth/admin-check.
-export async function adminCheck(req: Request, res: Response) {
-  const user = getAuthUser(req);
-  ok(res, { message: 'Acceso de administrador confirmado', alias: user.alias, role: user.role });
 }

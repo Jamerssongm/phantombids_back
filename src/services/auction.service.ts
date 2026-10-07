@@ -57,6 +57,7 @@ import {
   applyReputationEvent,
   reputationKey,
 } from './reputation.service.js';
+import { logger } from '../utils/logger.js';
 
 export interface AuctionFilters {
   status?: AuctionStatus;
@@ -359,9 +360,7 @@ async function penalize(userId: string, auction: AuctionDocument, imposedAt: Dat
         if (!isDuplicateKeyError(error)) throw error;
       }
     } else {
-      console.warn(
-        '⚠️  Catálogo de maldiciones vacío: se aplica solo la penalización de reputación',
-      );
+      logger.warn('Catálogo de maldiciones vacío: se aplica solo la penalización de reputación');
     }
   }
   await applyReputationEvent(
@@ -431,8 +430,8 @@ export async function settleAuction(auction: AuctionDocument): Promise<void> {
     { _id: auction._id, settledAt: { $exists: false } },
     { $set: { settledAt: new Date() } },
   );
-  console.log(
-    `🔨 Subasta ${String(auction._id)} liquidada: ${result.status}` +
+  logger.info(
+    `Subasta ${String(auction._id)} liquidada: ${result.status}` +
       (result.winner
         ? `, gana ${result.winner.userId} con ${result.winningAmount}`
         : `, ${result.cancellationReason}`) +

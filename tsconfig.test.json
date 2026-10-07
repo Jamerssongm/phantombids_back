@@ -1,0 +1,10 @@
+{
+  // Chequeo de tipos de los tests: tests/ queda fuera de rootDir (src) en
+  // tsconfig.json, así que `tsc` solo no los ve. No emite nada.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["src", "tests"]
+}

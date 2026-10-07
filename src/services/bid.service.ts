@@ -88,3 +88,19 @@ export async function listRevealedBids(auctionId: string): Promise<BidDocument[]
     .populate('user', PUBLIC_USER_FIELDS)
     .sort({ amount: 1, createdAt: 1 });
 }
+
+/**
+ * Quiénes pujaron, SIN montos (REGLAS.md §2b): el secreto es el monto, no la
+ * participación. Disponible también con la subasta abierta (lo necesitan las
+ * apuestas paralelas). Se proyecta solo el usuario de cada puja: el monto ni
+ * siquiera sale de la base. Orden por alias, no por momento de la puja.
+ */
+export async function listParticipants(auctionId: string): Promise<Record<string, unknown>[]> {
+  const auction = await syncLifecycle(await findAuctionOr404(auctionId));
+  const bids = await Bid.find({ auction: auction._id })
+    .select('user')
+    .populate<{ user: UserDocument }>('user', 'alias avatarUrl');
+  return bids
+    .map(({ user }) => ({ id: String(user._id), alias: user.alias, avatarUrl: user.avatarUrl }))
+    .sort((a, b) => a.alias.localeCompare(b.alias));
+}

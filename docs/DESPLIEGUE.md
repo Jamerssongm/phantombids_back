@@ -61,7 +61,7 @@ En **Environment** → **Add Environment Variable**, cargar una por una:
 | `JWT_EXPIRES_IN` | `1d` | |
 | `BCRYPT_ROUNDS` | `10` | |
 | `CORS_ORIGIN` | URL del frontend desplegado, ej. `https://phantombids.vercel.app` | Varias separadas por coma, sin `/` al final |
-| `AUTO_CLOSE_ENABLED` | `true` | |
+| `AUTO_CLOSE_ENABLED` | `true` | **Siempre `true`.** Activa el cierre automático de subastas; se recupera solo cuando el servicio despierta (ver Limitaciones) |
 
 **No cargar `PORT`.** Render lo inyecta solo (10000) y la app lo lee de ahí.
 
@@ -72,8 +72,9 @@ Guardar con **Save Changes**. Esto dispara un deploy.
 1. En **Logs** tienen que aparecer, en orden:
 
    ```
-   ✅ MongoDB conectado (base: phantombids)
-   👻 PhantomBids API escuchando en el puerto 10000 (production)
+   …Z INFO  MongoDB conectado (base: phantombids)
+   …Z INFO  Scheduler de subastas activo (cada 60 s)
+   …Z INFO  PhantomBids API escuchando en el puerto 10000 (production)
    ```
 
    y el deploy tiene que quedar en **Live**.
@@ -90,6 +91,9 @@ Guardar con **Save Changes**. Esto dispara un deploy.
 
    curl -i https://phantombids-api.onrender.com/no-existe
    # HTTP/2 404 con {"success":false,"error":{…,"code":"NOT_FOUND"}}
+
+   curl -s https://phantombids-api.onrender.com/api/docs.json | head -c 200
+   # la especificación OpenAPI; abrir /api/docs en el navegador para Swagger UI
    ```
 
 3. Comprobar que `"environment"` diga `production` y `"db"` diga `connected`.
@@ -109,32 +113,19 @@ siguientes son normales.
 - El frontend debería mostrar un estado de carga razonable en la primera
   petición, no un error por timeout corto.
 
+**El cierre automático de subastas NO se pierde por esto** (por eso
+`AUTO_CLOSE_ENABLED=true`): al arrancar, el scheduler hace una pasada inmediata
+que cierra y liquida toda subasta cuyo `closesAt` venció mientras el proceso
+estaba dormido; además, cualquier acceso a una subasta vencida la cierra en ese
+momento. El resultado es el mismo que si se hubiera cerrado a la hora exacta,
+porque las pujas posteriores a `closesAt` se rechazan siempre.
+
 ### Atlas abierto a 0.0.0.0/0
 
 Render no da IP estática en el tier gratuito, así que Atlas tiene que aceptar
 conexiones desde cualquier IP. La protección real pasa a ser el usuario y la
 contraseña de la cadena de conexión: tienen que ser fuertes y no pueden aparecer
 en el repositorio.
-
-### Consecuencias para el cierre automático de subastas
-
-El cierre automático (`AUTO_CLOSE_ENABLED`) se implementa en una sesión
-posterior. Si se hace con un temporizador dentro del proceso (`setInterval`),
-**no corre mientras el servicio está dormido**: una subasta cuyo `endsAt` pasa
-durante la noche no se cierra a esa hora, sino cuando llega la siguiente
-petición y despierta la instancia.
-
-Por eso el diseño no debería depender solo del temporizador. **Propuesta, todavía
-no adoptada:** antes de implementarla hay que documentarla en `docs/REGLAS.md`,
-porque toca reglas de dominio.
-
-- Al leer una subasta, si `endsAt` ya pasó y sigue `open`, resolverla en ese
-  momento (cierre perezoso), para que el resultado sea correcto aunque el
-  proceso haya estado dormido.
-- Usar el temporizador como complemento mientras la instancia está despierta.
-- Rechazar cualquier puja recibida después de `endsAt` aunque la subasta todavía
-  figure `open`, para que el momento en que se procesa el cierre no cambie el
-  resultado.
 
 ---
 
@@ -149,7 +140,7 @@ TypeScript no se instala.
 `npm ci --include=dev && npm run build`. Revisarlo en **Settings** → **Build &
 Deploy**, corregirlo y hacer **Manual Deploy** → **Deploy latest commit**.
 
-### `❌ No se pudo conectar a MongoDB: … Server selection timed out` o `bad auth`
+### `ERROR No se pudo conectar a MongoDB: … Server selection timed out` o `bad auth`
 
 - **`Server selection timed out` / `Could not connect to any servers`:** Atlas
   rechaza la IP de Render. Agregar `0.0.0.0/0` en **Network Access** y esperar a
