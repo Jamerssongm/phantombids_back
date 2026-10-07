@@ -20,6 +20,13 @@ archivo `render.yaml` de la raíz describe la misma configuración como Blueprin
    mongodb+srv://usuario:password@cluster0.xxxxx.mongodb.net/phantombids?retryWrites=true&w=majority
    ```
 
+   En Render va siempre la base **`phantombids`**. Para desarrollo local se usa
+   otra base del mismo cluster, **`phantombids_dev`** (ver el camino A de
+   [`ENTREGA.md`](ENTREGA.md)): `npm run seed` borra la base a la que apunta, y
+   así las pruebas locales nunca tocan los datos del despliegue. Si se omite el
+   nombre de la base (`….mongodb.net/?retryWrites…`), Mongo escribe en `test`
+   sin dar error.
+
    Si la contraseña tiene caracteres especiales (`@`, `:`, `/`, `#`, `%`), hay
    que codificarlos en la URL (por ejemplo, `@` pasa a ser `%40`).
 

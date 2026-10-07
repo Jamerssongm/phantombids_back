@@ -217,6 +217,12 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
 
 ## Despliegue
 
+- **MongoDB local:** imagen `mongo:8.2`, nunca `mongo:8` ni `mongo:latest`: las
+  8.3+ no arrancan en kernels Linux 6.19 o posteriores (MongoDB SERVER-121912).
+- **Bases en Atlas:** `phantombids` para Render y `phantombids_dev` para
+  desarrollo local, en el mismo cluster. Nunca apuntar un `.env` local a
+  `phantombids`: el seed la borraría.
+
 Render, servicio web gratuito, configurado en `render.yaml`. Guía completa y
 troubleshooting en `docs/DESPLIEGUE.md`.
 
