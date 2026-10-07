@@ -44,8 +44,8 @@ const avatarUrl = () =>
  *     - Auth
  *     summary: Registrar un usuario
  *     description: 'Crea la cuenta con rol **user** (el rol nunca se acepta del body: si llega, se ignora)
- *       y un alias anónimo generado. Devuelve el usuario y un token. Rate limit: 10 registros por IP cada
- *       15 minutos.'
+ *       y un alias anónimo generado. Devuelve el usuario y un token, con el header Location apuntando a
+ *       /api/users/{id}. Rate limit: 10 registros por IP cada 15 minutos.'
  *     requestBody:
  *       required: true
  *       content:
@@ -76,7 +76,7 @@ const avatarUrl = () =>
  *             - displayName
  *     responses:
  *       201:
- *         $ref: '#/components/responses/AuthResultOk'
+ *         $ref: '#/components/responses/AuthResultCreated'
  *       409:
  *         $ref: '#/components/responses/Conflict'
  *       422:

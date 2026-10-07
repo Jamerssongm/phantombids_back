@@ -13,7 +13,8 @@ export async function register(
 ) {
   const { email, password, displayName, avatarUrl } = req.body;
   const { user, token } = await authService.register({ email, password, displayName, avatarUrl });
-  created(res, { user, token });
+  // Location apunta al perfil del usuario creado (montado en /api/users).
+  created(res, { user, token }, `/api/users/${user.id as string}`);
 }
 
 export async function login(req: Request<object, unknown, authService.LoginInput>, res: Response) {

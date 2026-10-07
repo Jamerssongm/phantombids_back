@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "0a3ff253-00b3-57b0-8c07-4af8a8cf5c75",
     "name": "PhantomBids API",
-    "description": "Recorrido completo de la API (78 requests, 106 tests), para ejecutar EN ORDEN con \"Run collection\".\n\nRequisitos: API corriendo y datos del seed cargados (`npm run seed`). Se puede volver a ejecutar sin re-sembrar.\nLos logins de la carpeta 1 guardan los tokens en variables que usan los demás requests. La carpeta 6 es el ciclo de una subasta de punta a punta, numerado.\n\nPara la API desplegada, cambiar la variable `baseUrl` por la URL de Render.",
+    "description": "Recorrido completo de la API (79 requests), para ejecutar EN ORDEN con \"Run collection\".\n\nRequisitos: API corriendo y datos del seed cargados (`npm run seed`). Se puede volver a ejecutar sin re-sembrar.\nLos logins de la carpeta 1 guardan los tokens en variables que usan los demás requests. La carpeta 6 es el ciclo de una subasta de punta a punta, numerado.\n\nPara la API desplegada, cambiar la variable `baseUrl` por la URL de Render.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -355,6 +355,7 @@
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
                   "pm.test('rol user y token', () => { const d = pm.response.json().data; pm.expect(d.user.role).to.eql('user'); pm.expect(d.token).to.be.a('string'); });",
+                  "pm.test('Location al perfil creado', () => pm.expect(pm.response.headers.get('Location')).to.eql('/api/users/' + pm.response.json().data.user.id));",
                   "pm.test('sin passwordHash', () => pm.expect(pm.response.json().data.user).to.not.have.property('passwordHash'));"
                 ]
               }
@@ -3242,6 +3243,59 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Referencia del body inexistente → 422",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bets"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{headToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auction\": \"000000000000000000000000\",\n  \"targetAlias\": \"Silente_401\",\n  \"chips\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                  "pm.test('detalle del campo auction', () => pm.expect(pm.response.json().error.details[0].field).to.eql('auction'));"
                 ]
               }
             }

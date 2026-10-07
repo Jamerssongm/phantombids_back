@@ -20,7 +20,7 @@ betRouter.use(autenticar);
  *     summary: Apostar por quién gana
  *     description: Subasta open; fichas 5/10/25/50, que se descuentan de la reputación al apostar (409 si
  *       no alcanza); el alias objetivo debe haber pujado y no ser uno mismo (422); una apuesta por subasta
- *       (409). Paga 3× si gana.
+ *       (409). Si `auction` no existe responde 422 con el detalle del campo. Paga 3× si gana.
  *     security:
  *     - bearerAuth: []
  *     requestBody:
@@ -52,8 +52,6 @@ betRouter.use(autenticar);
  *         $ref: '#/components/responses/SideBetCreated'
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
- *       404:
- *         $ref: '#/components/responses/NotFound'
  *       409:
  *         $ref: '#/components/responses/Conflict'
  *       422:

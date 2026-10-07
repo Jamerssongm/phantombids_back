@@ -59,7 +59,14 @@ export async function placeBet(
   actor: UserDocument,
   input: PlaceBetInput,
 ): Promise<SideBetDocument> {
-  const auction = await syncLifecycle(await findAuctionOr404(input.auction));
+  // `auction` viene del body: si no existe es un dato inválido (422), no un
+  // recurso de la URL inexistente (404). Misma convención que objects y auctions.
+  const found = await Auction.findById(input.auction);
+  if (!found) {
+    const message = 'La subasta indicada no existe';
+    throw AppError.unprocessable(message, [{ field: 'auction', value: input.auction, message }]);
+  }
+  const auction = await syncLifecycle(found);
   if (auction.status !== 'open' || new Date() >= auction.closesAt) {
     throw auctionClosed('Solo se puede apostar en una subasta abierta');
   }
