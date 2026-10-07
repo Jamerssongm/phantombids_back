@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { body } from 'express-validator';
 import * as authController from '../controllers/auth.controller.js';
 import { autenticar } from '../middlewares/auth.js';
-import { autorizar } from '../middlewares/autorizar.js';
 import { loginLimiter, registerLimiter } from '../middlewares/rateLimit.js';
 import { validate } from '../middlewares/validate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -202,13 +201,4 @@ authRouter.put(
   autenticar,
   validate([trimmedString('displayName', { min: 3, max: 50, optional: true }), avatarUrl()]),
   asyncHandler(authController.updateMe),
-);
-
-// TODO(b06): BORRAR. Ruta temporal para demostrar el criterio 5 (autorizar) antes
-// de que existan rutas de negocio protegidas por rol.
-authRouter.get(
-  '/admin-check',
-  autenticar,
-  autorizar('admin'),
-  asyncHandler(authController.adminCheck),
 );

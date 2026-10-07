@@ -34,9 +34,3 @@ export async function updateMe(
   const user = await authService.updateMe(getAuthUser(req), { displayName, avatarUrl });
   ok(res, user);
 }
-
-// TODO(b06): borrar junto con la ruta /api/auth/admin-check.
-export async function adminCheck(req: Request, res: Response) {
-  const user = getAuthUser(req);
-  ok(res, { message: 'Acceso de administrador confirmado', alias: user.alias, role: user.role });
-}

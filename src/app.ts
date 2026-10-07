@@ -8,7 +8,6 @@ import { getDbStatus } from './config/database.js';
 import { env } from './config/env.js';
 import { swaggerSpec } from './config/swagger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
-import { testRouter } from './routes/_test.routes.js';
 import { apiRouter } from './routes/index.js';
 import { AppError } from './utils/AppError.js';
 import { ok } from './utils/apiResponse.js';
@@ -120,11 +119,6 @@ app.use(
 );
 
 app.use('/api', apiRouter);
-
-if (!env.isProduction) {
-  // TODO(b06): quitar junto con src/routes/_test.routes.ts.
-  app.use('/api/_test', testRouter);
-}
 
 // 404: toda ruta no encontrada pasa por el mismo camino que cualquier otro error.
 app.use((req: Request, _res: Response, next: NextFunction) => {

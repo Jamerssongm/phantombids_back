@@ -15,6 +15,7 @@
 import { Auction } from '../models/Auction.js';
 import { UserCurse } from '../models/UserCurse.js';
 import { resolveAuctionById, settleAuction } from './auction.service.js';
+import { logger } from '../utils/logger.js';
 
 const DEFAULT_INTERVAL_MS = 60_000;
 
@@ -60,20 +61,20 @@ export async function runSchedulerPass(): Promise<PassSummary> {
 
 async function tick(): Promise<void> {
   if (currentPass) {
-    console.warn('⏱️  Scheduler: la pasada anterior sigue en curso, se saltea este tick');
+    logger.warn('Scheduler: la pasada anterior sigue en curso, se saltea este tick');
     return;
   }
   currentPass = (async () => {
     try {
       const s = await runSchedulerPass();
       if (s.opened || s.resolved || s.recovered || s.expiredCurses) {
-        console.log(
-          `⏱️  Scheduler: ${s.opened} abierta(s), ${s.resolved} cerrada(s), ` +
+        logger.info(
+          `Scheduler: ${s.opened} abierta(s), ${s.resolved} cerrada(s), ` +
             `${s.recovered} cierre(s) completado(s), ${s.expiredCurses} maldición(es) vencida(s)`,
         );
       }
     } catch (error) {
-      console.error('❌ Scheduler: la pasada falló', error);
+      logger.error('Scheduler: la pasada falló', error);
     } finally {
       currentPass = undefined;
     }
@@ -84,7 +85,7 @@ async function tick(): Promise<void> {
 /** Arranca el scheduler: una pasada inmediata (recupera lo vencido mientras dormía) y luego cada intervalo. */
 export function startAuctionScheduler(intervalMs = DEFAULT_INTERVAL_MS): void {
   if (timer) return;
-  console.log(`⏱️  Scheduler de subastas activo (cada ${intervalMs / 1000} s)`);
+  logger.info(`Scheduler de subastas activo (cada ${intervalMs / 1000} s)`);
   void tick();
   timer = setInterval(() => void tick(), intervalMs);
 }
@@ -96,7 +97,7 @@ export async function stopAuctionScheduler(): Promise<void> {
     timer = undefined;
   }
   if (currentPass) {
-    console.log('⏱️  Scheduler: esperando que termine la pasada en curso...');
+    logger.info('Scheduler: esperando que termine la pasada en curso...');
     await currentPass;
   }
 }

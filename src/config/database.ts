@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { env } from './env.js';
+import { logger } from '../utils/logger.js';
 
 export type DbStatus = 'connected' | 'disconnected';
 
@@ -10,13 +11,13 @@ function registerListeners(): void {
   listenersRegistered = true;
 
   mongoose.connection.on('error', (error: Error) => {
-    console.error('❌ MongoDB: error de conexión:', error.message);
+    logger.error('MongoDB: error de conexión:', error.message);
   });
   mongoose.connection.on('disconnected', () => {
-    console.warn('⚠️  MongoDB: desconectado');
+    logger.warn('MongoDB: desconectado');
   });
   mongoose.connection.on('reconnected', () => {
-    console.log('🔁 MongoDB: reconectado');
+    logger.info('MongoDB: reconectado');
   });
 }
 
@@ -26,9 +27,9 @@ export async function connectDB(): Promise<void> {
   try {
     await mongoose.connect(env.MONGODB_URI, { serverSelectionTimeoutMS: 10_000 });
     // Solo el nombre de la base: la cadena completa lleva la contraseña.
-    console.log(`✅ MongoDB conectado (base: ${mongoose.connection.name})`);
+    logger.info(`MongoDB conectado (base: ${mongoose.connection.name})`);
   } catch (error) {
-    console.error('❌ No se pudo conectar a MongoDB:', (error as Error).message);
+    logger.error('No se pudo conectar a MongoDB:', (error as Error).message);
     process.exit(1);
   }
 }

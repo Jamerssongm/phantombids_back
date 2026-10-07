@@ -206,6 +206,15 @@ Diferencias que rompen ejemplos y código copiados de versiones anteriores:
   operación en silencio.
 - Verificar con `npm run build && npm start` y `GET /api/docs.json`, no solo en dev.
 
+## Logs
+
+- `utils/logger.ts` (`logger.info/warn/error/debug`): timestamp ISO + nivel,
+  silencioso con `NODE_ENV=test`, `debug` solo fuera de producción. **No usar
+  `console.*`** en el código de la app.
+- Excepciones deliberadas: `utils/seed.ts` (script de consola) y
+  `config/env.ts` (falla antes de que exista la configuración que el logger usa).
+- Las peticiones HTTP las registra morgan, solo fuera de producción.
+
 ## Despliegue
 
 Render, servicio web gratuito, configurado en `render.yaml`. Guía completa y
